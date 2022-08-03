@@ -17,20 +17,20 @@ A assignment for data comunication discipline. It must simulate the link layer o
 
 ### Contrato: trocar quadros via socket
 
-- [X] Criar dois exectáveis com SDL2
 - [ ] Criar dois sockets e conecta-los
-- [ ] Trocar mensagens entre executáveis
+- [X] Criar duas threads com SDL2
+- [ ] Trocar mensagens entre threads via socket
 
 ### Contrato: ler arquivo de vídeo
 
 - [ ] Ler arquivo por stdin inteiramente
-- [ ] Transmitir arquivo do primeiro pro segundo executável via socket
+- [ ] Transmitir arquivo da primeira pra segunda thread via socket
 - [ ] Imprimir arquivo no final
 
 ### Contrato: introduzir camada de rede
 
 - [ ] Encapsular leitura e impressão do arquivo
-- [ ] Enviar e receber partes via socket em cada executável
+- [ ] Enviar e receber partes via socket em cada thread
 - [ ] Ir checando arquivo transmitido com original
 
 ### Contrato: introduzir camada de enlace
@@ -127,6 +127,6 @@ A assignment for data comunication discipline. It must simulate the link layer o
 - [ ] ??????????????
 - [ ] 66666666666666
 
-### Contrato: modo piggyback
+## Contrato: modo piggyback
 
 - [ ] 8=======D~~~~~

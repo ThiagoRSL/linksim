@@ -1,7 +1,7 @@
 CC=cc -std=c17 -pipe
 
-CFLAGS=-Wpedantic -Wall -Wextra -Wvla -Wshadow -fstrict-aliasing $$(pkgconf --cflags SDL2 SDL2_net)
-LDLIBS=-lm $$(pkgconf --libs SDL2 SDL2_net)
+CFLAGS=-Wpedantic -Wall -Wextra -Wvla -Wshadow -fstrict-aliasing $$(pkgconf --cflags SDL2)
+LDLIBS=-lm $$(pkgconf --libs SDL2)
 
 SOURCE=main.c
 TARGET=linksim
