@@ -14,7 +14,7 @@ $(TARGET):t2
 t2:$(SOURCE)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o t2 $(SOURCE) $(LDLIBS)
 
-main.c:rnd.h lifecycle.h
+main.c:lifecycle.h
 	touch main.c
 
 clean:
