@@ -4,18 +4,15 @@ CFLAGS=-Wpedantic -Wall -Wextra -Wvla -Wshadow -fstrict-aliasing $$(pkgconf --cf
 LDLIBS=-lm $$(pkgconf --libs SDL2 SDL2_net)
 
 SOURCE=main.c
-TARGET=sender receiver
+TARGET=linksim
 
 all:$(TARGET)
 
-$(TARGET):t2
-	cp t2 $@
-
-t2:$(SOURCE)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o t2 $(SOURCE) $(LDLIBS)
+$(TARGET):$(SOURCE)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(SOURCE) $(LDLIBS)
 
 main.c:lifecycle.h
 	touch main.c
 
 clean:
-	rm -f t2 $(TARGET)
+	rm -f $(TARGET)
