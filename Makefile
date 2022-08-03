@@ -4,9 +4,9 @@ CFLAGS=-Wpedantic -Wall -Wextra -Wvla -Wshadow -fstrict-aliasing $$(pkgconf --cf
 LDLIBS=-lm $$(pkgconf --libs SDL2 SDL2_net)
 
 SOURCE=main.c
-TARGET=sender recipient
+TARGET=sender receiver
 
-all:sender recipient
+all:$(TARGET)
 
 $(TARGET):t2
 	cp t2 $@
