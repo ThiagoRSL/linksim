@@ -4,9 +4,11 @@
 
 int main(int argc, char *argv[])
 {
-    lifecycle_begin(argc, argv);
+    int sockets[2];
 
-    lifecycle_end();
+    lifecycle_begin(argc, argv, sockets);
+
+    lifecycle_end(sockets);
 
     return 0;
 }

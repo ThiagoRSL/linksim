@@ -16,6 +16,7 @@ TARGET = linksim
 ifeq ($(PLATFORM),win32)
 CFLAGS += $$(pkgconf --cflags SDL2)
 LDLIBS += $$(pkgconf --libs   SDL2) -lws2_32
+TARGET  = linksim.exe
 endif
 
 # Linux
@@ -26,15 +27,15 @@ endif
 
 ####### RECIPES #######
 
-.c.h:
-	touch $@
-
 all:$(TARGET)
 
 $(TARGET):$(SOURCE)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(SOURCE) $(LDLIBS)
 
-main.c:lifecycle.h socket.h
+main.c:lifecycle.h
+	touch $@
+lifecycle.h:socket.h
+	touch $@
 
 clean:
 	rm -f $(TARGET)
