@@ -1,6 +1,6 @@
 # linksim
 
-A assignment for data comunication discipline. It must simulate the link layer of OSI model.
+An assignment for data comunication discipline. It must simulate the link layer of OSI model.
 
 ## Requisitos
 
@@ -12,6 +12,28 @@ A assignment for data comunication discipline. It must simulate the link layer o
 - Transferência de imagem
 - Interface gráfica (extra)
 - Transferência de vídeo (extra)
+
+## Compilação e arquivos
+
+Requisitos:
+
+- SDL2
+- Make com extensões da GNU
+- Acesso a utilitário rm (para o alvo `clean`)
+
+Desenvolvido e testado com:
+
+- Ubuntu (pelo WSL2)
+- Windows pelo MSYS2
+
+Arquivos para retrocompatibilidade com Windows:
+
+- `fcntl.h`
+- `sys/socket.h`
+- `unistd.h`
+- `socket.c`
+
+IMPORTANTE: escolher PLATFORM no arquivo `Makefile` antes de compilar.
 
 ## Contratos
 
@@ -127,6 +149,6 @@ A assignment for data comunication discipline. It must simulate the link layer o
 - [ ] ??????????????
 - [ ] 66666666666666
 
-## Contrato: modo piggyback
+### Contrato: modo piggyback
 
 - [ ] 8=======D~~~~~

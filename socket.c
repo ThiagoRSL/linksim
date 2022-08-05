@@ -1,12 +1,35 @@
-#ifndef __SOCKETPAIR_H__
-#define __SOCKETPAIR_H__
+#include <assert.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <stdio.h>
+
+#include <winsock2.h>
+
+#include <sys/socket.h>
+#include <fcntl.h>
+
+int close(int fd)
+{
+    assert(fd >= 0);
+    return closesocket(fd);
+}
+
+int fcntl(int fd, int cmd, int flag)
+{
+    assert("Not implemented" && F_SETFL    == cmd);
+    assert("Not implemented" && O_NONBLOCK == flag);
+
+    if (ioctlsocket(fd, FIONBIO, (u_long []){1}) != 0)
+    {
+        errno = WSAGetLastError();
+        return -1;
+    }
+
+    return 0;
+}
 
 // Welcome to Windows.
 // Copied from https://gitlab.com/openconnect/openconnect/-/blob/master/compat.c
-
-#define SOCK_NONBLOCK 4096 // Arbitrarily chosen high number.
-
-static int socketpair(int domain, int type, int protocol, int sv[2]);
 
 /* https://github.com/ncm/selectable-socketpair/blob/master/socketpair.c
 
@@ -226,7 +249,7 @@ static int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
     return SOCKET_ERROR;
 }
 
-static int socketpair(int domain, int type, int protocol, int sv[2])
+int socketpair(int domain, int type, int protocol, int sv[2])
 {
     (void)domain;
     (void)protocol;
@@ -253,5 +276,3 @@ static int socketpair(int domain, int type, int protocol, int sv[2])
 
     return 0;
 }
-
-#endif

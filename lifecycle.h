@@ -1,9 +1,10 @@
 #ifndef __LIFECYCLE_H__
 #define __LIFECYCLE_H__
 
-#include <SDL.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
-#include "socket.h"
+#include <SDL.h>
 
 static void lifecycle_begin(int argc, char *argv[], int sockets[2])
 {

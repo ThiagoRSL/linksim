@@ -1,9 +1,11 @@
+#include <errno.h>
 #include <stdio.h>
+
+#include <sys/socket.h>
 
 #include <SDL.h>
 
 #include "lifecycle.h"
-#include "socket.h"
 
 static int TestThread(void *ptr)
 {

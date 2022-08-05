@@ -4,19 +4,24 @@ PLATFORM = win32
 ####### DEFAULT SETTINGS #######
 
 CC     = cc -std=c17 -pipe
-CFLAGS = -Wpedantic -Wall -Wextra -Wvla -Wshadow -fstrict-aliasing -Werror
+CFLAGS = -Wpedantic -Wall -Wextra -Wvla -Wshadow -fstrict-aliasing
 LDLIBS = -lm 
+
+SDLCFLAGS =
+SDLLDLIBS =
 
 SOURCE = main.c
 TARGET = linksim
+OBJECT =
 
 ####### PLATFORM SPECIFIC STUFF HERE #######
 
 # Windows (MSYS2)
 ifeq ($(PLATFORM),win32)
-CFLAGS += $$(pkgconf --cflags SDL2)
+CFLAGS += $$(pkgconf --cflags SDL2) -I .
 LDLIBS += $$(pkgconf --libs   SDL2) -lws2_32
 TARGET  = linksim.exe
+OBJECT += socket.o
 endif
 
 # Linux
@@ -29,16 +34,18 @@ endif
 
 all:$(TARGET)
 
-$(TARGET):$(SOURCE)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(SOURCE) $(LDLIBS)
+clean:
+	rm -f $(TARGET) $(OBJECT)
+
+$(TARGET):$(SOURCE) $(OBJECT)
+	$(CC) $(CFLAGS) $(SDLCFLAGS) -o $@ $(SOURCE) $(OBJECT) $(LDLIBS) $(SDLLDLIBS)
 
 main.c:lifecycle.h
-	touch $@
-lifecycle.h:socket.h
-	touch $@
 
-clean:
-	rm -f $(TARGET)
+####### PLATFORM SPECIFIC RECIPES #######
+
+socket.o:socket.c sys/socket.h fcntl.h
+	$(CC) $(CFLAGS) -c $<
 
 # Based on this exemplary Makefile:
 # https://github.com/pete-gordon/planet-hively/blob/master/makefile
