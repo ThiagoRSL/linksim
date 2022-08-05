@@ -25,19 +25,10 @@ static void lifecycle_begin(int argc, char *argv[], int sockets[2])
     }
 #endif
 
-    for (int socket_i = 0; socket_i < 2; socket_i++)
+    if (-1 == socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, sockets))
     {
-        if (-1 == (sockets[socket_i] = socket(AF_UNIX, SOCK_STREAM, 0)))
-        {
-            perror(NULL);
-            exit(EXIT_FAILURE);
-        }
-
-        if (fcntl(sockets[socket_i], F_SETFL, O_NONBLOCK) != 0)
-        {
-            perror(NULL);
-            exit(EXIT_FAILURE);
-        }
+        perror(NULL);
+        exit(EXIT_FAILURE);
     }
 
     (void)argc;

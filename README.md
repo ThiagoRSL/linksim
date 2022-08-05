@@ -17,9 +17,9 @@ A assignment for data comunication discipline. It must simulate the link layer o
 
 ### Contrato: trocar quadros via socket
 
-- [ ] Criar dois sockets e conecta-los
+- [X] Criar dois sockets e conecta-los
 - [X] Criar duas threads com SDL2
-- [ ] Trocar mensagens entre threads via socket
+- [X] Trocar mensagens entre threads via socket
 
 ### Contrato: ler arquivo de vídeo
 

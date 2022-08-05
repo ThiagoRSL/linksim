@@ -4,7 +4,7 @@ PLATFORM = win32
 ####### DEFAULT SETTINGS #######
 
 CC     = cc -std=c17 -pipe
-CFLAGS = -Wpedantic -Wall -Wextra -Wvla -Wshadow -fstrict-aliasing
+CFLAGS = -Wpedantic -Wall -Wextra -Wvla -Wshadow -fstrict-aliasing -Werror
 LDLIBS = -lm 
 
 SOURCE = main.c
