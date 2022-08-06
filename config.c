@@ -1,8 +1,4 @@
-#ifndef __LIFECYCLE_H__
-#define __LIFECYCLE_H__
-
 #include <assert.h>
-
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -11,14 +7,16 @@
 
 #include <SDL.h>
 
+#include "config.h"
+
 #define BUFFER_INCREMENT 200000
 
-static void lifecycle_begin(int argc, char *argv[], int sockets[2], unsigned char **buffer, int *buffer_size)
-{
-    assert(buffer      != NULL);
-    assert(buffer_size != NULL);
-    assert(NULL == *buffer);
+static struct config config;
 
+static void config_quit(void);
+
+struct config config_init(int argc, char *argv[])
+{
     if (argc != 2 || '\0' == argv[1][0])
     {
         printf("USAGE: linksim[.exe] <file>\n");
@@ -43,16 +41,19 @@ static void lifecycle_begin(int argc, char *argv[], int sockets[2], unsigned cha
     }
 #endif
 
+    int sockets[2] = {-1, -1};
+
     if (-1 == socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, sockets))
     {
         perror(NULL);
         exit(EXIT_FAILURE);
     }
 
-    *buffer             = NULL;
-    int buffer_capacity = 0;
-    int tries_left      = 500;
-    int result          = -1;
+    unsigned char *buffer = NULL;
+    int buffer_size       = 0;
+    int buffer_capacity   = 0;
+    int tries_left        = 500;
+    int result            = -1;
 
     FILE *file = fopen(argv[1], "rb");
 
@@ -66,18 +67,18 @@ static void lifecycle_begin(int argc, char *argv[], int sockets[2], unsigned cha
 
     do
     {
-        unsigned char *buffer_new = realloc(*buffer, (buffer_capacity = *buffer_size + BUFFER_INCREMENT));
+        unsigned char *buffer_new = realloc(buffer, (buffer_capacity = buffer_size + BUFFER_INCREMENT));
 
         if (NULL == buffer_new)
         {
-            free(*buffer);
+            free(buffer);
             perror(NULL);
             exit(EXIT_FAILURE);
         }
 
-        *buffer = buffer_new;
+        buffer = buffer_new;
 
-        result = fread(*buffer + *buffer_size, 1, BUFFER_INCREMENT, file);
+        result = fread(buffer + buffer_size, 1, BUFFER_INCREMENT, file);
 
 	printf("I got %d for this fread()!\n", result);
 
@@ -104,7 +105,7 @@ static void lifecycle_begin(int argc, char *argv[], int sockets[2], unsigned cha
             read_state = READ_NORMAL;
 	}
 
-        *buffer_size += result;
+        buffer_size += result;
     }
     while (BUFFER_INCREMENT == result || read_state != READ_LOW_COUNT_AGAIN || !feof(file)); 
 
@@ -113,24 +114,29 @@ static void lifecycle_begin(int argc, char *argv[], int sockets[2], unsigned cha
         printf("Closed %s with error! But that's okay!\n", argv[1]);
     }
 
-    printf("I've read %d bytes! %d errors while reading!\n", *buffer_size, 500 - tries_left);
+    printf("I've read %d bytes! %d errors while reading!\n", buffer_size, 500 - tries_left);
 
-    (void)argc;
-    (void)argv;
+    config = (struct config){{sockets[0], sockets[1]}, buffer, buffer_size};
+
+    atexit(config_quit);
+
+    return config;
 }
 
-static void lifecycle_end(int sockets[2], unsigned char **buffer)
+static void config_quit(void)
 {
-    free(*buffer);
+    free(config.buffer);
 
-    *buffer = NULL;
+    config.buffer = NULL;
 
-    close(sockets[0]);
-    close(sockets[1]);
+    close(config.sockets[0]);
+    close(config.sockets[1]);
 
 #ifdef _WIN32
     WSACleanup();
 #endif
-}
 
+#if SDL_VERSION_ATLEAST(2,0,16)
+    SDL_TLSCleanup();
 #endif
+}

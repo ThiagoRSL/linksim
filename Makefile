@@ -12,7 +12,7 @@ SDLLDLIBS =
 
 SOURCE = main.c
 TARGET = linksim
-OBJECT =
+OBJECT = config.o
 
 ####### PLATFORM SPECIFIC STUFF HERE #######
 
@@ -40,8 +40,9 @@ clean:
 $(TARGET):$(SOURCE) $(OBJECT)
 	$(CC) $(CFLAGS) $(SDLCFLAGS) -o $@ $(SOURCE) $(OBJECT) $(LDLIBS) $(SDLLDLIBS)
 
-main.c:lifecycle.h
+main.c:config.h
 	touch $@
+config.o:config.c config.h
 
 ####### PLATFORM SPECIFIC RECIPES #######
 

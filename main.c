@@ -1,13 +1,14 @@
+#include <assert.h>
 #include <errno.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <sys/socket.h>
 
 #include <SDL.h>
 
-#include "lifecycle.h"
+#include "config.h"
 
 struct filme
 {
@@ -115,67 +116,15 @@ static int FilmeThread(void *ptr)
     return filme.fd;
 }
 
-static int TestThread(void *ptr)
-{
-    int fd = *(int *)ptr;
-
-    int total_sent     = 0;
-    int total_received = 0;
-
-    for (int i = 0; i < 100; i++)
-    {
-        int count = send(fd, "hello", 6, 0);
-        int error = errno;
-
-        if (-1 == count)
-        {
-            if (!(EAGAIN == error || EWOULDBLOCK == error))
-            {
-                perror(NULL);
-            }
-        }
-        else
-        {
-            total_sent += count;
-            printf("I sent \"hello\" to fd %d for the %dth time! It received only %d bytes!\n", fd, i, count);
-        }
-
-        char buffer[10000];
-
-        count = recv(fd, buffer, 10000, 0);
-
-        if (-1 == count)
-        {
-            perror(NULL);
-        }
-        else
-        {
-            total_received += count;
-            printf("I received %*s from fd %d! I received only %d bytes!\n", count, buffer, fd, count);
-        }
-    }
-
-    printf("I have fd %d and sent %d bytes and received %d!\n", fd, total_sent, total_received);
-
-    return fd;
-}
-
 int main(int argc, char *argv[])
 {
     printf("Hey!\n");
 
-    int sockets[2];
+    struct config config = config_init(argc, argv);
 
-    int buffer_size = 0;
-    unsigned char *buffer = NULL;
+    assert(config.buffer_size > 0);
 
-    printf("Hey!\n");
-
-    lifecycle_begin(argc, argv, sockets, &buffer, &buffer_size);
-
-    assert(buffer_size > 0);
-
-    unsigned char *buffer2 = malloc(buffer_size);
+    unsigned char *buffer2 = malloc(config.buffer_size);
 
     if (NULL == buffer2)
     {
@@ -183,7 +132,7 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    unsigned char *buffer3 = malloc(buffer_size);
+    unsigned char *buffer3 = malloc(config.buffer_size);
 
     if (NULL == buffer3)
     {
@@ -191,13 +140,13 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    printf("fds = %d and %d.\n", sockets[0], sockets[1]);
+    printf("fds = %d and %d.\n", config.sockets[0], config.sockets[1]);
 
     SDL_Thread *thread1 = NULL;
     SDL_Thread *thread2 = NULL;
     
-    struct filme filme1 = {buffer_size, buffer, buffer2, sockets[0]};
-    struct filme filme2 = {buffer_size, buffer, buffer3, sockets[1]};
+    struct filme filme1 = {config.buffer_size, config.buffer, buffer2, config.sockets[0]};
+    struct filme filme2 = {config.buffer_size, config.buffer, buffer3, config.sockets[1]};
 
     if (NULL == (thread1 = SDL_CreateThread(FilmeThread, "test1", &filme1)))
     {
@@ -214,7 +163,7 @@ int main(int argc, char *argv[])
     SDL_WaitThread(thread1, NULL);
     SDL_WaitThread(thread2, NULL);
 
-    if (!memcmp(buffer2, buffer3, buffer_size))
+    if (!memcmp(buffer2, buffer3, config.buffer_size))
     {
         printf("Both sides have the same thing!!!!\n");
     }
@@ -223,16 +172,8 @@ int main(int argc, char *argv[])
         printf("Contents are different!!!!\n");
     }
 
-#if 1
     free(buffer2);
     free(buffer3);
-#endif
-
-    lifecycle_end(sockets, &buffer);
-
-#if _WIN32
-    SDL_TLSCleanup();
-#endif
 
     return 0;
 }
