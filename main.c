@@ -230,7 +230,9 @@ int main(int argc, char *argv[])
 
     lifecycle_end(sockets, &buffer);
 
+#if _WIN32
     SDL_TLSCleanup();
+#endif
 
     return 0;
 }

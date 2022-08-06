@@ -19,6 +19,12 @@ static void lifecycle_begin(int argc, char *argv[], int sockets[2], unsigned cha
     assert(buffer_size != NULL);
     assert(NULL == *buffer);
 
+    if (argc != 2 || '\0' == argv[1][0])
+    {
+        printf("USAGE: linksim[.exe] <file>\n");
+	exit(EXIT_FAILURE);
+    }
+
     atexit(SDL_Quit);
 
     if (SDL_Init(SDL_INIT_TIMER) != 0)
@@ -48,6 +54,16 @@ static void lifecycle_begin(int argc, char *argv[], int sockets[2], unsigned cha
     int tries_left      = 500;
     int result          = -1;
 
+    FILE *file = fopen(argv[1], "rb");
+
+    if (NULL == file)
+    {
+        perror(argv[1]);
+        exit(EXIT_FAILURE);
+    }
+
+    enum { READ_NORMAL, READ_LOW_COUNT, READ_LOW_COUNT_AGAIN } read_state = READ_NORMAL;
+
     do
     {
         unsigned char *buffer_new = realloc(*buffer, (buffer_capacity = *buffer_size + BUFFER_INCREMENT));
@@ -61,15 +77,17 @@ static void lifecycle_begin(int argc, char *argv[], int sockets[2], unsigned cha
 
         *buffer = buffer_new;
 
-        result = fread(*buffer + *buffer_size, 1, BUFFER_INCREMENT, stdin);
+        result = fread(*buffer + *buffer_size, 1, BUFFER_INCREMENT, file);
+
+	printf("I got %d for this fread()!\n", result);
 
         if (result < BUFFER_INCREMENT)
         {
-            if (ferror(stdin))
+            if (ferror(file))
             {
                 if (tries_left > 0)
                 {
-                    clearerr(stdin);
+                    clearerr(file);
                     tries_left--;
                 }
                 else
@@ -78,11 +96,24 @@ static void lifecycle_begin(int argc, char *argv[], int sockets[2], unsigned cha
                     exit(EXIT_FAILURE);
                 }
             }
+
+	    read_state++;
         }
+	else
+	{
+            read_state = READ_NORMAL;
+	}
 
         *buffer_size += result;
     }
-    while (BUFFER_INCREMENT == result || !feof(stdin)); 
+    while (BUFFER_INCREMENT == result || read_state != READ_LOW_COUNT_AGAIN || !feof(file)); 
+
+    if (EOF == fclose(file))
+    {
+        printf("Closed %s with error! But that's okay!\n", argv[1]);
+    }
+
+    printf("I've read %d bytes! %d errors while reading!\n", *buffer_size, 500 - tries_left);
 
     (void)argc;
     (void)argv;

@@ -45,9 +45,9 @@ IMPORTANTE: escolher PLATFORM no arquivo `Makefile` antes de compilar.
 
 ### Contrato: ler arquivo de vídeo
 
-- [ ] Ler arquivo por stdin inteiramente
-- [ ] Transmitir arquivo da primeira pra segunda thread via socket
-- [ ] Imprimir arquivo no final
+- [X] Ler arquivo por argumento inteiramente
+- [X] Transmitir arquivo da primeira pra segunda thread via socket
+- [X] Comparar se arquivos transmitidos são iguais
 
 ### Contrato: introduzir camada de rede
 
