@@ -8,8 +8,7 @@
 #include <SDL.h>
 
 #include "config.h"
-
-#define BUFFER_INCREMENT 200000
+#include "upper.h"
 
 static struct config config;
 
@@ -49,74 +48,7 @@ struct config config_init(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    unsigned char *buffer = NULL;
-    int buffer_size       = 0;
-    int buffer_capacity   = 0;
-    int tries_left        = 500;
-    int result            = -1;
-
-    FILE *file = fopen(argv[1], "rb");
-
-    if (NULL == file)
-    {
-        perror(argv[1]);
-        exit(EXIT_FAILURE);
-    }
-
-    enum { READ_NORMAL, READ_LOW_COUNT, READ_LOW_COUNT_AGAIN } read_state = READ_NORMAL;
-
-    do
-    {
-        unsigned char *buffer_new = realloc(buffer, (buffer_capacity = buffer_size + BUFFER_INCREMENT));
-
-        if (NULL == buffer_new)
-        {
-            free(buffer);
-            perror(NULL);
-            exit(EXIT_FAILURE);
-        }
-
-        buffer = buffer_new;
-
-        result = fread(buffer + buffer_size, 1, BUFFER_INCREMENT, file);
-
-	printf("I got %d for this fread()!\n", result);
-
-        if (result < BUFFER_INCREMENT)
-        {
-            if (ferror(file))
-            {
-                if (tries_left > 0)
-                {
-                    clearerr(file);
-                    tries_left--;
-                }
-                else
-                {
-                    fprintf(stderr, "Failed to read stdin.\n");
-                    exit(EXIT_FAILURE);
-                }
-            }
-
-	    read_state++;
-        }
-	else
-	{
-            read_state = READ_NORMAL;
-	}
-
-        buffer_size += result;
-    }
-    while (BUFFER_INCREMENT == result || read_state != READ_LOW_COUNT_AGAIN || !feof(file)); 
-
-    if (EOF == fclose(file))
-    {
-        printf("Closed %s with error! But that's okay!\n", argv[1]);
-    }
-
-    printf("I've read %d bytes! %d errors while reading!\n", buffer_size, 500 - tries_left);
-
-    config = (struct config){{sockets[0], sockets[1]}, buffer, buffer_size};
+    config = (struct config){{sockets[0], sockets[1]}, upper_init(argv[1])};
 
     atexit(config_quit);
 
@@ -125,9 +57,7 @@ struct config config_init(int argc, char *argv[])
 
 static void config_quit(void)
 {
-    free(config.buffer);
-
-    config.buffer = NULL;
+    upper_quit(&(config.upper));
 
     close(config.sockets[0]);
     close(config.sockets[1]);

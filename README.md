@@ -51,9 +51,9 @@ IMPORTANTE: escolher PLATFORM no arquivo `Makefile` antes de compilar.
 
 ### Contrato: introduzir camada de rede
 
-- [ ] Encapsular leitura e impressão do arquivo
+- [X] Encapsular leitura do arquivo
 - [ ] Enviar e receber partes via socket em cada thread
-- [ ] Ir checando arquivo transmitido com original
+- [ ] Encapsular checagem do arquivo transmitido com original
 
 ### Contrato: introduzir camada de enlace
 
