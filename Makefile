@@ -3,7 +3,7 @@ PLATFORM = win32
 
 ####### DEFAULT SETTINGS #######
 
-CC     = cc -std=c17 -pipe
+CC     = cc -std=c17 -pipe -g
 CFLAGS = -Wpedantic -Wall -Wextra -Wvla -Wshadow -fstrict-aliasing
 LDLIBS = -lm 
 
@@ -41,6 +41,7 @@ $(TARGET):$(SOURCE) $(OBJECT)
 	$(CC) $(CFLAGS) $(SDLCFLAGS) -o $@ $(SOURCE) $(OBJECT) $(LDLIBS) $(SDLLDLIBS)
 
 main.c:lifecycle.h
+	touch $@
 
 ####### PLATFORM SPECIFIC RECIPES #######
 
