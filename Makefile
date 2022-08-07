@@ -4,15 +4,14 @@ PLATFORM = win32
 ####### DEFAULT SETTINGS #######
 
 CC     = cc -std=c17 -pipe -g
-CFLAGS = -Wpedantic -Wall -Wextra -Wvla -Wshadow -fstrict-aliasing
+CFLAGS = -O2 -flto -Wpedantic -Wall -Wextra -Wvla -Wshadow -fstrict-aliasing
 LDLIBS = -lm 
 
 SDLCFLAGS =
 SDLLDLIBS =
 
-SOURCE = main.c
+OBJECT = main.o config.o upper.o
 TARGET = linksim
-OBJECT = config.o upper.o
 
 ####### PLATFORM SPECIFIC STUFF HERE #######
 
@@ -37,18 +36,16 @@ all:$(TARGET)
 clean:
 	rm -f $(TARGET) $(OBJECT)
 
-$(TARGET):$(SOURCE) $(OBJECT)
-	$(CC) $(CFLAGS) $(SDLCFLAGS) -o $@ $(SOURCE) $(OBJECT) $(LDLIBS) $(SDLLDLIBS)
+$(TARGET):$(OBJECT)
+	$(CC) $(CFLAGS) $(SDLCFLAGS) -o $@ $(OBJECT) $(LDLIBS) $(SDLLDLIBS)
 
-main.c:config.h config.h upper.h
-	touch $@
+main.o:config.h config.h main.c upper.h
 config.o:config.c config.h upper.h
 upper.o:upper.c upper.h
 
 ####### PLATFORM SPECIFIC RECIPES #######
 
-socket.o:socket.c sys/socket.h fcntl.h
-	$(CC) $(CFLAGS) -c $<
+socket.o:fcntl.h socket.c sys/socket.h unistd.h
 
 # Based on this exemplary Makefile:
 # https://github.com/pete-gordon/planet-hively/blob/master/makefile

@@ -153,7 +153,7 @@ static int dumb_socketpair(OPENCONNECT_CMD_SOCKET socks[2], int make_overlapped)
              * seems like a less-bad option.
              */
             LARGE_INTEGER ticks;
-            DWORD n;
+            DWORD n = 0;
             int bind_try = 0;
 
             for (;;) {

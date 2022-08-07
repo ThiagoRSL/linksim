@@ -48,7 +48,11 @@ struct config config_init(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    config = (struct config){{sockets[0], sockets[1]}, upper_init(argv[1])};
+    struct upper upper = {0};
+    
+    upper_init(&upper, argv[1]);
+
+    config = (struct config){{sockets[0], sockets[1]}, upper};
 
     atexit(config_quit);
 

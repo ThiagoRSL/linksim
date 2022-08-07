@@ -1,12 +1,20 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "upper.h"
 
 #define BUFFER_INCREMENT 200000
+#define FRAME_SIZE       500
 
-struct upper upper_init(char const *filepath)
+#define MIN(A, B) ((A) < (B) ? (A) : (B))
+
+void upper_init(struct upper *upper, char const *filepath)
 {
+    assert(upper != NULL);
+    assert(filepath != NULL);
+
     unsigned char *buffer = NULL;
     int buffer_size       = 0;
     int buffer_capacity   = 0;
@@ -74,13 +82,47 @@ struct upper upper_init(char const *filepath)
 
     printf("I've read %d bytes! %d errors while reading!\n", buffer_size, 500 - tries_left);
 
-    return (struct upper){buffer, buffer_size};
+    upper->data    = buffer;
+    upper->size    = buffer_size;
+    upper->read    = 0;
+    upper->written = 0;
 }
 
 void upper_quit(struct upper *upper)
 {
+    assert(upper != NULL);
+
     free(upper->data);
 
     upper->data = NULL;
     upper->size = 0;
+}
+
+int upper_read(struct upper *upper, unsigned char **excerpt)
+{
+    assert(upper   != NULL);
+    assert(excerpt != NULL);
+
+    int const length = MIN(FRAME_SIZE, upper->size - upper->read);
+
+    assert(length >= 0);
+
+    *excerpt     = length ? upper->data + upper->read : NULL;
+    upper->read += length;
+
+    return length;
+}
+
+int upper_write(struct upper *upper, unsigned char *excerpt, int length)
+{
+    assert(upper   != NULL);
+    assert(excerpt != NULL);
+    assert(length >= 0);
+    assert(length <= upper->size - upper->written);
+
+    int error = memcmp(upper->data + upper->size, excerpt, length) ? -1 : 1;
+
+    upper->written += length;
+
+    return error * (upper->size - upper->written);
 }

@@ -12,11 +12,11 @@
 
 struct filme
 {
-    int            buffer_size;
-    unsigned char *original;
+    struct upper   upper;
     unsigned char *vessel;
     int            fdSender;
     int            fdReceiver;
+    int            wrote_with_error;
 };
 
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
@@ -30,12 +30,15 @@ static int FilmeSender(void *ptr)
     struct filme filme = *(struct filme *)ptr;
 
     int total_sent     = 0;
-    int tries_left = 100;
+    int tries_left = 500;
     int unavailable = 10;
 
-    while (total_sent != filme.buffer_size)
+    int            frame   = 0;
+    unsigned char *excerpt = NULL;
+
+    while ((frame = upper_read(&filme.upper, &excerpt)))
     {
-        int count = send(filme.fdSender, filme.original + total_sent, MIN(FRAME_SIZE, filme.buffer_size - total_sent) , 0);
+        int count = send(filme.fdSender, (void *)excerpt, frame, 0);
 
         if (-1 == count)
         {
@@ -88,11 +91,13 @@ static int FilmeReceiver(void *ptr)
     int total_received = 0;
     int tries_left = 100;
 
-    while (total_received != filme.buffer_size)
+    int bytes_left = filme.upper.size;
+
+    do
     {
         SDL_Delay(1);
 
-        int count = recv(filme.fdReceiver, filme.vessel + total_received, filme.buffer_size - total_received, 0);
+        int count = recv(filme.fdReceiver, (void *)filme.vessel, bytes_left, 0);
 
         if (-1 == count)
         {
@@ -115,9 +120,24 @@ static int FilmeReceiver(void *ptr)
         {
             printf("Thread with fd %d received %d bytes.\n", filme.fdReceiver, count);
 
+            int remaining = upper_write(&filme.upper, filme.vessel, count);
+
+            if (remaining < 0)
+            {
+                filme.wrote_with_error = 1;
+                bytes_left = -remaining;
+            }
+            else
+            {
+                bytes_left = remaining;
+            }
+
             total_received += count;
+
+            assert(bytes_left + total_received == filme.upper.size);
         }
     }
+    while (bytes_left > 0);
 
     printf("Received %d bytes! My fd is %d.\n", total_received, filme.fdReceiver);
 
@@ -145,7 +165,7 @@ int main(int argc, char *argv[])
     SDL_Thread *thread1 = NULL;
     SDL_Thread *thread2 = NULL;
     
-    struct filme filme = {config.upper.size, config.upper.data, buffer2, config.sockets[0], config.sockets[1]};
+    struct filme filme = {config.upper, buffer2, config.sockets[0], config.sockets[1], 0};
 
     if (NULL == (thread1 = SDL_CreateThread(FilmeSender, "sender", &filme)))
     {
@@ -162,13 +182,13 @@ int main(int argc, char *argv[])
     SDL_WaitThread(thread1, NULL);
     SDL_WaitThread(thread2, NULL);
 
-    if (!memcmp(buffer2, config.upper.data, config.upper.size))
+    if (filme.wrote_with_error)
     {
-        printf("Both sides have the same thing!!!!\n");
+        printf("Contents are different!!!!\n");
     }
     else
     {
-        printf("Contents are different!!!!\n");
+        printf("Both sides have the same thing!!!!\n");
     }
 
     free(buffer2);
