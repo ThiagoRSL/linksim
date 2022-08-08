@@ -16,12 +16,8 @@ struct filme
     unsigned char *vessel;
     int            fdSender;
     int            fdReceiver;
-    int            wrote_with_error;
+    int            n_error;
 };
-
-#define MIN(A, B) ((A) < (B) ? (A) : (B))
-
-#define FRAME_SIZE 500
 
 static int FilmeSender(void *ptr)
 {
@@ -29,117 +25,56 @@ static int FilmeSender(void *ptr)
 
     struct filme filme = *(struct filme *)ptr;
 
-    int total_sent     = 0;
-    int tries_left = 500;
-    int unavailable = 10;
-
     int            frame   = 0;
     unsigned char *excerpt = NULL;
 
-    while ((frame = upper_read(&filme.upper, &excerpt)))
+    while ((frame = upper_read(&filme.upper, &excerpt, 500)))
     {
         int count = send(filme.fdSender, (void *)excerpt, frame, 0);
 
-        if (-1 == count)
+        if (-1 == count && !(EAGAIN == errno || EWOULDBLOCK == errno))
         {
-            perror(NULL);
-
-            if (EAGAIN == errno || EWOULDBLOCK == errno)
-            {
-                unavailable--;
-
-                if (unavailable <= 0)
-                {
-                    SDL_Delay(100);
-                    unavailable = 10;
-                }
-            }
-            else
-            {
-                fprintf(stderr, "Failure on socket send (fd %d)!\n", filme.fdSender);
-
-                tries_left--;
-
-                if (tries_left <= 0)
-                {
-                    fprintf(stderr, "Bailing out (fd %d)!\n", filme.fdSender);
-                    exit(EXIT_FAILURE);
-                }
-            }
+            fprintf(stderr, "Failure on socket send (fd %d)!\n", filme.fdSender);
         }
-        else
+        else if (count >= 0)
         {
             printf("Thread with fd %d sent %d bytes.\n", filme.fdSender, count);
-
-            total_sent += count;
         }
-
-        SDL_Delay(1);
     }
 
-    printf("Sent %d bytes! My fd is %d.\n", total_sent, filme.fdSender);
+    printf("Sent %zu bytes! My fd is %d.\n", filme.upper.size, filme.fdSender);
 
     return filme.fdSender;
 }
 
 static int FilmeReceiver(void *ptr)
 {
-    assert(ptr != NULL);
-
     struct filme filme = *(struct filme *)ptr;
 
-    int total_received = 0;
-    int tries_left = 100;
-
-    int bytes_left = filme.upper.size;
+    int remaining = filme.upper.size;
 
     do
     {
         SDL_Delay(1);
 
-        int count = recv(filme.fdReceiver, (void *)filme.vessel, bytes_left, 0);
+        int count = recv(filme.fdReceiver, (void *)filme.vessel, remaining, 0);
 
-        if (-1 == count)
+        if (-1 == count && !(EAGAIN == errno || EWOULDBLOCK == errno))
         {
-            perror(NULL);
-
-            if (!(EAGAIN == errno || EWOULDBLOCK == errno))
-            {
-                fprintf(stderr, "Failure on socket receive (fd %d)!\n", filme.fdReceiver);
-
-                tries_left--;
-
-                if (0 == tries_left)
-                {
-                    fprintf(stderr, "Bailing out (fd %d)!\n", filme.fdReceiver);
-                    exit(EXIT_FAILURE);
-                }
-            }
+            fprintf(stderr, "Failure on socket receive (fd %d)!\n", filme.fdReceiver);
         }
-        else
+        else if (count >= 0)
         {
             printf("Thread with fd %d received %d bytes.\n", filme.fdReceiver, count);
 
-            int remaining = upper_write(&filme.upper, filme.vessel, count);
-
-            if (remaining < 0)
-            {
-                filme.wrote_with_error = 1;
-                bytes_left = -remaining;
-            }
-            else
-            {
-                bytes_left = remaining;
-            }
-
-            total_received += count;
-
-            assert(bytes_left + total_received == filme.upper.size);
+            remaining      = upper_write(&filme.upper, filme.vessel, count);
+            filme.n_error += remaining < 0;
+            remaining      = abs(remaining);
         }
     }
-    while (bytes_left > 0);
+    while (remaining > 0);
 
-    printf("Received %d bytes! My fd is %d.\n", total_received, filme.fdReceiver);
+    printf("Received %zu bytes! My fd is %d.\n", filme.upper.size, filme.fdReceiver);
 
     return filme.fdReceiver;
 }
@@ -167,13 +102,13 @@ int main(int argc, char *argv[])
     
     struct filme filme = {config.upper, buffer2, config.sockets[0], config.sockets[1], 0};
 
-    if (NULL == (thread1 = SDL_CreateThread(FilmeSender, "sender", &filme)))
+    if (NULL == (thread2 = SDL_CreateThread(FilmeReceiver, "receiver", &filme)))
     {
         SDL_Log("Thread creation failed: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
 
-    if (NULL == (thread2 = SDL_CreateThread(FilmeReceiver, "receiver", &filme)))
+    if (NULL == (thread1 = SDL_CreateThread(FilmeSender, "sender", &filme)))
     {
         SDL_Log("Thread creation failed: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
@@ -182,7 +117,7 @@ int main(int argc, char *argv[])
     SDL_WaitThread(thread1, NULL);
     SDL_WaitThread(thread2, NULL);
 
-    if (filme.wrote_with_error)
+    if (filme.n_error)
     {
         printf("Contents are different!!!!\n");
     }
