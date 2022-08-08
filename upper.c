@@ -5,23 +5,21 @@
 
 #include "upper.h"
 
-#define MAX_CAPACITY 3000000000
-
-#ifdef _HEAP_MAXREQ
-_Static_assert(MAX_CAPACITY < _HEAP_MAXREQ, "Kinda glutton, eh?");
-#endif
-
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
 
-void upper_init(struct upper *upper, char const *filepath)
+void upper_init(struct upper *upper, char const *filepath, size_t capacity)
 {
     assert(upper    != NULL);
     assert(filepath != NULL);
 
+#ifdef _HEAP_MAXREQ
+    assert(capacity < _HEAP_MAXREQ);
+#endif
+
     upper->read    = 0;
     upper->written = 0;
 
-    if (NULL == (upper->data = malloc(MAX_CAPACITY)))
+    if (NULL == (upper->data = malloc(capacity)))
     {
         perror(NULL);
         exit(EXIT_FAILURE);
@@ -35,9 +33,9 @@ void upper_init(struct upper *upper, char const *filepath)
         exit(EXIT_FAILURE);
     }
 
-    upper->size = fread(upper->data, 1, MAX_CAPACITY, file);
+    upper->size = fread(upper->data, 1, capacity, file);
 
-    if ((size_t)MAX_CAPACITY == upper->size && fgetc(file) != EOF)
+    if (capacity == upper->size && fgetc(file) != EOF)
     {
         printf("Not enough memory to read file.\n");
         exit(EXIT_FAILURE);

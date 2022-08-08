@@ -11,7 +11,7 @@ struct upper
     size_t         written;
 };
 
-void upper_init (struct upper *upper, char const *filepath);
+void upper_init (struct upper *upper, char const *filepath, size_t capacity);
 void upper_empty(struct upper *upper);
 int  upper_read (struct upper *upper, unsigned char **excerpt, size_t length);
 int  upper_write(struct upper *upper, unsigned char  *excerpt, size_t length);

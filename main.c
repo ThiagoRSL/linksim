@@ -114,8 +114,15 @@ int main(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
+    printf("Okay, awaiting first thread.\n");
+
     SDL_WaitThread(thread1, NULL);
+
+    printf("Okay, awaiting second thread.\n");
+
     SDL_WaitThread(thread2, NULL);
+
+    printf("Okay, done!\n");
 
     if (filme.n_error)
     {

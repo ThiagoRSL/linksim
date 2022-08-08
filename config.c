@@ -16,12 +16,6 @@ static void config_quit(void);
 
 struct config config_init(int argc, char *argv[])
 {
-    if (argc != 2 || '\0' == argv[1][0])
-    {
-        printf("USAGE: linksim[.exe] <file>\n");
-	exit(EXIT_FAILURE);
-    }
-
     atexit(SDL_Quit);
 
     if (SDL_Init(SDL_INIT_TIMER) != 0)
@@ -48,9 +42,41 @@ struct config config_init(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
+    opterr = 0;
+    int option = -1;
+    int mbs = 2000;
+
+    char const usage[] = "USAGE: linksim[.exe] [-m <mbs>] <file>";
+
+    while ((option = getopt(argc, argv, "m:")) != -1)
+    {
+        switch(option)
+        {
+            case 'm':
+                mbs = atoi(optarg);
+                if (mbs <= 0)
+                {
+                    printf("%s\n", usage);
+                    exit(EXIT_FAILURE);
+                }
+            break;
+
+            case '?':
+                printf("%s\n", usage);
+                exit(EXIT_FAILURE);
+            break;
+        }
+    }
+
+    if (optind != argc - 1 || '\0' == argv[optind][0])
+    {
+        printf("USAGE: linksim[.exe] [-m <mbs>] <file> [<file>]\n");
+	exit(EXIT_FAILURE);
+    }
+
     struct upper upper = {0};
     
-    upper_init(&upper, argv[1]);
+    upper_init(&upper, argv[optind], 1000000 * (size_t)mbs);
 
     config = (struct config){{sockets[0], sockets[1]}, upper};
 
