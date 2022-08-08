@@ -1,6 +1,8 @@
 #ifndef __UNISTD_H__
 #define __UNISTD_H__
 
+#include <stddef.h>
+
 extern int   optind;
 extern int   opterr;
 extern int   optopt;

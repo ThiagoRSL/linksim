@@ -8,6 +8,7 @@
 #include <SDL.h>
 
 #include "config.h"
+#include "shenanigans.h"
 #include "upper.h"
 
 static struct config config;
@@ -24,15 +25,7 @@ struct config config_init(int argc, char *argv[])
         exit(EXIT_FAILURE);
     }
 
-#ifdef _WIN32
-    WSADATA wsaData;
-
-    if (WSAStartup(MAKEWORD(2,0), &wsaData) != 0)
-    {
-        SDL_Log("Failed network initialization.\n");
-        exit(EXIT_FAILURE);
-    }
-#endif
+    network_start();
 
     int sockets[2] = {-1, -1};
 
@@ -92,9 +85,7 @@ static void config_quit(void)
     close(config.sockets[0]);
     close(config.sockets[1]);
 
-#ifdef _WIN32
-    WSACleanup();
-#endif
+    network_quit();
 
 #if SDL_VERSION_ATLEAST(2,0,16)
     SDL_TLSCleanup();

@@ -5,78 +5,57 @@
 #include <string.h>
 
 #include <sys/socket.h>
+#include <unistd.h>
 
 #include <SDL.h>
 
 #include "config.h"
+#include "link.h"
+#include "shenanigans.h"
+#include "upper.h"
 
-struct filme
-{
-    struct upper   upper;
-    unsigned char *vessel;
-    int            fdSender;
-    int            fdReceiver;
-    int            n_error;
-};
-
-static int FilmeSender(void *ptr)
+static int device(void *ptr)
 {
     assert(ptr != NULL);
 
-    struct filme filme = *(struct filme *)ptr;
+    struct link   *link                       = (struct link *)ptr;
+    int            n_byte                     = 0;
+    unsigned char  bytes[LINK_FRAME_BYTE_MAX] = {0};
 
-    int            frame   = 0;
-    unsigned char *excerpt = NULL;
+    int tries_left = 10000;
 
-    while ((frame = upper_read(&filme.upper, &excerpt, 500)))
+    int code = 0;
+
+    while (1 == (code = link_process(link, bytes, n_byte)))
     {
-        int count = send(filme.fdSender, (void *)excerpt, frame, 0);
+        n_byte = recv(link->fd, (void *)bytes, link->frame_size, 0);
 
-        if (-1 == count && !(EAGAIN == errno || EWOULDBLOCK == errno))
+        if (-1 == n_byte)
         {
-            fprintf(stderr, "Failure on socket send (fd %d)!\n", filme.fdSender);
+            fix_errno();
+            if (EAGAIN != errno && EWOULDBLOCK != errno)
+            {
+                fprintf(stderr, "Failure on socket (fd %d)!\n", link->fd);
+
+		tries_left--;
+
+                if (0 == tries_left)
+                {
+                    return 1;
+                }
+            }
+
+            n_byte = 0;
         }
-        else if (count >= 0)
+        else
         {
-            printf("Thread with fd %d sent %d bytes.\n", filme.fdSender, count);
+            tries_left = 10000;
         }
+
+        printf("Thread with fd %d received %d bytes.\n", link->fd, n_byte);
     }
 
-    printf("Sent %zu bytes! My fd is %d.\n", filme.upper.size, filme.fdSender);
-
-    return filme.fdSender;
-}
-
-static int FilmeReceiver(void *ptr)
-{
-    struct filme filme = *(struct filme *)ptr;
-
-    int remaining = filme.upper.size;
-
-    do
-    {
-        SDL_Delay(1);
-
-        int count = recv(filme.fdReceiver, (void *)filme.vessel, remaining, 0);
-
-        if (-1 == count && !(EAGAIN == errno || EWOULDBLOCK == errno))
-        {
-            fprintf(stderr, "Failure on socket receive (fd %d)!\n", filme.fdReceiver);
-        }
-        else if (count >= 0)
-        {
-            printf("Thread with fd %d received %d bytes.\n", filme.fdReceiver, count);
-
-            remaining      = upper_write(&filme.upper, filme.vessel, count);
-            filme.n_error += remaining < 0;
-            remaining      = abs(remaining);
-        }
-    }
-    while (remaining > 0);
-
-    printf("Received %zu bytes! My fd is %d.\n", filme.upper.size, filme.fdReceiver);
-
-    return filme.fdReceiver;
+    return -1 == code ? 1 : 0;
 }
 
 int main(int argc, char *argv[])
@@ -87,53 +66,52 @@ int main(int argc, char *argv[])
 
     assert(config.upper.size > 0);
 
-    unsigned char *buffer2 = malloc(config.upper.size);
-
-    if (NULL == buffer2)
-    {
-        perror(NULL);
-        exit(EXIT_FAILURE);
-    }
-
     printf("fds = %d and %d.\n", config.sockets[0], config.sockets[1]);
 
-    SDL_Thread *thread1 = NULL;
-    SDL_Thread *thread2 = NULL;
+    SDL_Thread *sender   = NULL;
+    SDL_Thread *receiver = NULL;
+
+    struct upper empty = {0};
+
+    upper_empty(&empty);
     
-    struct filme filme = {config.upper, buffer2, config.sockets[0], config.sockets[1], 0};
+    struct link sending   = {&config.upper, &empty       , config.sockets[0], 500, 0};
+    struct link receiving = {&empty       , &config.upper, config.sockets[1], 500, 0};
 
-    if (NULL == (thread2 = SDL_CreateThread(FilmeReceiver, "receiver", &filme)))
+    link_check(&sending);
+    link_check(&receiving);
+
+    if (NULL == (sender = SDL_CreateThread(device, "sender", &sending)))
     {
         SDL_Log("Thread creation failed: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
 
-    if (NULL == (thread1 = SDL_CreateThread(FilmeSender, "sender", &filme)))
+    if (NULL == (receiver = SDL_CreateThread(device, "receiver", &receiving)))
     {
         SDL_Log("Thread creation failed: %s\n", SDL_GetError());
         exit(EXIT_FAILURE);
     }
 
-    printf("Okay, awaiting first thread.\n");
+    int error_sender   = 0;
+    int error_receiver = 0;
 
-    SDL_WaitThread(thread1, NULL);
+    printf("Okay, awaiting sender.\n");
+    SDL_WaitThread(sender, &error_sender);
 
-    printf("Okay, awaiting second thread.\n");
-
-    SDL_WaitThread(thread2, NULL);
+    printf("Okay, awaiting receiver.\n");
+    SDL_WaitThread(receiver, &error_receiver);
 
     printf("Okay, done!\n");
 
-    if (filme.n_error)
+    switch (error_sender + (error_receiver << 1))
     {
-        printf("Contents are different!!!!\n");
+        case 0:  printf("Both sides have the same thing!!!!\n");  break;
+        case 1:  printf("Sender had errors!!!!!\n");              break;
+        case 2:  printf("Receiver had errors!!!!!\n");            break;
+        case 3:  printf("Sender and receiver had errors!!!!!\n"); break;
+        default: assert(!"Impossible status combination!");       break;
     }
-    else
-    {
-        printf("Both sides have the same thing!!!!\n");
-    }
-
-    free(buffer2);
 
     return 0;
 }

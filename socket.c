@@ -10,6 +10,137 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 
+// Microsoft moment.
+void fix_errno(void)
+{
+    static int const errors[] = {
+        /*     6 */ [WSA_INVALID_HANDLE        ] =  -1,
+        /*     8 */ [WSA_NOT_ENOUGH_MEMORY     ] =  -1,
+        /*    87 */ [WSA_INVALID_PARAMETER     ] =  -1,
+        /*   995 */ [WSA_OPERATION_ABORTED     ] =  -1,
+        /*   996 */ [WSA_IO_INCOMPLETE         ] =  -1,
+        /*   997 */ [WSA_IO_PENDING            ] =  -1,
+        /* 10004 */ [WSAEINTR                  ] =  EINTR,
+        /* 10009 */ [WSAEBADF                  ] =  EBADF,
+        /* 10013 */ [WSAEACCES                 ] =  EACCES,
+        /* 10014 */ [WSAEFAULT                 ] =  EFAULT,
+        /* 10022 */ [WSAEINVAL                 ] =  EINVAL,
+        /* 10024 */ [WSAEMFILE                 ] =  EMFILE,
+        /* 10035 */ [WSAEWOULDBLOCK            ] =  EWOULDBLOCK,
+        /* 10036 */ [WSAEINPROGRESS            ] =  EINPROGRESS,
+        /* 10037 */ [WSAEALREADY               ] =  EALREADY,
+        /* 10038 */ [WSAENOTSOCK               ] =  ENOTSOCK,
+        /* 10039 */ [WSAEDESTADDRREQ           ] =  EDESTADDRREQ,
+        /* 10040 */ [WSAEMSGSIZE               ] =  EMSGSIZE,
+        /* 10041 */ [WSAEPROTOTYPE             ] =  EPROTOTYPE,
+        /* 10042 */ [WSAENOPROTOOPT            ] =  ENOPROTOOPT,
+        /* 10043 */ [WSAEPROTONOSUPPORT        ] =  EPROTONOSUPPORT,
+        /* 10044 */ [WSAESOCKTNOSUPPORT        ] =  -1,
+        /* 10045 */ [WSAEOPNOTSUPP             ] =  EOPNOTSUPP,
+        /* 10046 */ [WSAEPFNOSUPPORT           ] =  -1,
+        /* 10047 */ [WSAEAFNOSUPPORT           ] =  EAFNOSUPPORT,
+        /* 10048 */ [WSAEADDRINUSE             ] =  EADDRINUSE,
+        /* 10049 */ [WSAEADDRNOTAVAIL          ] =  EADDRNOTAVAIL,
+        /* 10050 */ [WSAENETDOWN               ] =  ENETDOWN,
+        /* 10051 */ [WSAENETUNREACH            ] =  ENETUNREACH,
+        /* 10052 */ [WSAENETRESET              ] =  ENETRESET,
+        /* 10053 */ [WSAECONNABORTED           ] =  ECONNABORTED,
+        /* 10054 */ [WSAECONNRESET             ] =  ECONNRESET,
+        /* 10055 */ [WSAENOBUFS                ] =  ENOBUFS,
+        /* 10056 */ [WSAEISCONN                ] =  EISCONN,
+        /* 10057 */ [WSAENOTCONN               ] =  ENOTCONN,
+        /* 10058 */ [WSAESHUTDOWN              ] =  -1,
+        /* 10059 */ [WSAETOOMANYREFS           ] =  -1,
+        /* 10060 */ [WSAETIMEDOUT              ] =  ETIMEDOUT,
+        /* 10061 */ [WSAECONNREFUSED           ] =  ECONNREFUSED,
+        /* 10062 */ [WSAELOOP                  ] =  ELOOP,
+        /* 10063 */ [WSAENAMETOOLONG           ] =  ENAMETOOLONG,
+        /* 10064 */ [WSAEHOSTDOWN              ] =  -1,
+        /* 10065 */ [WSAEHOSTUNREACH           ] =  EHOSTUNREACH,
+        /* 10066 */ [WSAENOTEMPTY              ] =  ENOTEMPTY,
+        /* 10067 */ [WSAEPROCLIM               ] =  -1,
+        /* 10068 */ [WSAEUSERS                 ] =  -1,
+        /* 10069 */ [WSAEDQUOT                 ] =  -1,
+        /* 10070 */ [WSAESTALE                 ] =  -1,
+        /* 10071 */ [WSAEREMOTE                ] =  -1,
+        /* 10091 */ [WSASYSNOTREADY            ] =  -1,
+        /* 10092 */ [WSAVERNOTSUPPORTED        ] =  -1,
+        /* 10093 */ [WSANOTINITIALISED         ] =  -1,
+        /* 10101 */ [WSAEDISCON                ] =  -1,
+        /* 10102 */ [WSAENOMORE                ] =  -1,
+        /* 10103 */ [WSAECANCELLED             ] =  ECANCELED,
+        /* 10104 */ [WSAEINVALIDPROCTABLE      ] =  -1,
+        /* 10105 */ [WSAEINVALIDPROVIDER       ] =  -1,
+        /* 10106 */ [WSAEPROVIDERFAILEDINIT    ] =  -1,
+        /* 10107 */ [WSASYSCALLFAILURE         ] =  -1,
+        /* 10108 */ [WSASERVICE_NOT_FOUND      ] =  -1,
+        /* 10109 */ [WSATYPE_NOT_FOUND         ] =  -1,
+        /* 10110 */ [WSA_E_NO_MORE             ] =  -1,
+        /* 10111 */ [WSA_E_CANCELLED           ] =  ECANCELED,
+        /* 10112 */ [WSAEREFUSED               ] =  -1,
+        /* 11001 */ [WSAHOST_NOT_FOUND         ] =  -1,
+        /* 11002 */ [WSATRY_AGAIN              ] =  -1,
+        /* 11003 */ [WSANO_RECOVERY            ] =  ENOTRECOVERABLE,
+        /* 11004 */ [WSANO_DATA                ] =  ENODATA,
+        /* 11005 */ [WSA_QOS_RECEIVERS         ] =  -1,
+        /* 11006 */ [WSA_QOS_SENDERS           ] =  -1,
+        /* 11007 */ [WSA_QOS_NO_SENDERS        ] =  -1,
+        /* 11008 */ [WSA_QOS_NO_RECEIVERS      ] =  -1,
+        /* 11009 */ [WSA_QOS_REQUEST_CONFIRMED ] =  -1,
+        /* 11010 */ [WSA_QOS_ADMISSION_FAILURE ] =  -1,
+        /* 11011 */ [WSA_QOS_POLICY_FAILURE    ] =  -1,
+        /* 11012 */ [WSA_QOS_BAD_STYLE         ] =  -1,
+        /* 11013 */ [WSA_QOS_BAD_OBJECT        ] =  -1,
+        /* 11014 */ [WSA_QOS_TRAFFIC_CTRL_ERROR] =  -1,
+        /* 11015 */ [WSA_QOS_GENERIC_ERROR     ] =  -1,
+        /* 11016 */ [WSA_QOS_ESERVICETYPE      ] =  -1,
+        /* 11017 */ [WSA_QOS_EFLOWSPEC         ] =  -1,
+        /* 11018 */ [WSA_QOS_EPROVSPECBUF      ] =  -1,
+        /* 11019 */ [WSA_QOS_EFILTERSTYLE      ] =  -1,
+        /* 11020 */ [WSA_QOS_EFILTERTYPE       ] =  -1,
+        /* 11021 */ [WSA_QOS_EFILTERCOUNT      ] =  -1,
+        /* 11022 */ [WSA_QOS_EOBJLENGTH        ] =  -1,
+        /* 11023 */ [WSA_QOS_EFLOWCOUNT        ] =  -1,
+        /* 11024 */ [WSA_QOS_EUNKOWNPSOBJ      ] =  -1,
+        /* 11025 */ [WSA_QOS_EPOLICYOBJ        ] =  -1,
+        /* 11026 */ [WSA_QOS_EFLOWDESC         ] =  -1,
+        /* 11027 */ [WSA_QOS_EPSFLOWSPEC       ] =  -1,
+        /* 11028 */ [WSA_QOS_EPSFILTERSPEC     ] =  -1,
+        /* 11029 */ [WSA_QOS_ESDMODEOBJ        ] =  -1,
+        /* 11030 */ [WSA_QOS_ESHAPERATEOBJ     ] =  -1,
+        /* 11031 */ [WSA_QOS_RESERVED_PETYPE   ] =  -1,
+    };
+
+    int error = WSAGetLastError();
+
+    if (error != 0)
+    {
+        assert("Unknown error."  && error >= 0);
+        assert("Unknown error."  && (size_t)error < sizeof (errors) / sizeof (*errors));
+
+        errno = errors[error];
+
+        assert("Unmapped error." && errno != -1);
+        assert("Unknown error."  && errno !=  0);
+    }
+}
+
+void network_start(void)
+{
+    WSADATA wsaData;
+
+    if (WSAStartup(MAKEWORD(2,0), &wsaData) != 0)
+    {
+        printf("Failed network initialization.\n");
+        exit(EXIT_FAILURE);
+    }
+}
+
+void network_quit(void)
+{
+    WSACleanup();
+}
+
 int close(int fd)
 {
     assert(fd >= 0);
@@ -23,7 +154,7 @@ int fcntl(int fd, int cmd, int flag)
 
     if (ioctlsocket(fd, FIONBIO, (u_long []){1}) != 0)
     {
-        errno = WSAGetLastError();
+        fix_errno();
         return -1;
     }
 

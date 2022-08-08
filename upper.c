@@ -75,7 +75,7 @@ int upper_write(struct upper *upper, unsigned char *excerpt, size_t length)
     assert(excerpt != NULL);
     assert(length <= upper->size - upper->written);
 
-    int error = memcmp(upper->data + upper->size, excerpt, length) ? -1 : 1;
+    int error = memcmp(upper->data + upper->written, excerpt, length) ? -1 : 1;
 
     upper->written += length;
 
