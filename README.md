@@ -19,7 +19,7 @@ Requisitos:
 
 - SDL2
 - Make com extensões da GNU
-- Acesso a utilitário rm (para o alvo `clean`)
+- Acesso a utilitário `rm` (para o alvo `clean`)
 
 Desenvolvido e testado com:
 
@@ -33,7 +33,7 @@ Arquivos para retrocompatibilidade com Windows:
 - `unistd.h`
 - `socket.c`
 
-IMPORTANTE: escolher PLATFORM no arquivo `Makefile` antes de compilar.
+IMPORTANTE: escolher `PLATFORM` no arquivo `Makefile` antes de compilar.
 
 ## Contratos
 
@@ -57,11 +57,11 @@ IMPORTANTE: escolher PLATFORM no arquivo `Makefile` antes de compilar.
 
 ### Contrato: introduzir camada de enlace
 
-- [ ] Criar módulo que corresponde ao enlace
-- [ ] Numa única chamada:
-    - [ ] Repassar quadros recebidos do socket
-    - [ ] Enviar dados pra camada superior
-    - [ ] Responder com outro quadro e envia-lo via socket
+- [X] Criar módulo que corresponde ao enlace
+- [X] Numa única chamada:
+    - [X] Repassar quadros recebidos do socket
+    - [X] Enviar dados pra camada superior
+    - [X] Responder com outro quadro e envia-lo via socket
 - [ ] Tamanho máximo do quadro configurável
 
 ### Contrato: aperfeiçoar enlace com Selective Repeat ARQ
@@ -151,4 +151,4 @@ IMPORTANTE: escolher PLATFORM no arquivo `Makefile` antes de compilar.
 
 ### Contrato: modo piggyback
 
-- [ ] 8=======D~~~~~
+- [X] 8=======D~~~~~

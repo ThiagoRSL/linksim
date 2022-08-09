@@ -3,57 +3,50 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "buffer.h"
+#include "files.h"
 #include "upper.h"
 
 #define MIN(A, B) ((A) < (B) ? (A) : (B))
 
-void upper_init(struct upper *upper, char const *filepath, size_t capacity)
+void upper_init(struct upper uppers[2], char *paths[2], struct buffer *buffer)
 {
-    assert(upper    != NULL);
-    assert(filepath != NULL);
+    assert(uppers   != NULL);
+    assert(paths    != NULL);
+    assert(paths[0] != NULL);
+    assert(buffer   != NULL);
 
-#ifdef _HEAP_MAXREQ
-    assert(capacity < _HEAP_MAXREQ);
-#endif
+    FILE          *files[2] = {NULL, NULL};
+    unsigned char *datas[2] = {NULL, NULL};
+    size_t         sizes[2] = {0   , 0   };
 
-    upper->read    = 0;
-    upper->written = 0;
+    files_open(files, paths);
 
-    if (NULL == (upper->data = malloc(capacity)))
+    for (int upper_i = 0; upper_i < 2; upper_i++)
     {
-        perror(NULL);
-        exit(EXIT_FAILURE);
+        if (NULL == paths[upper_i])
+        {
+            continue;
+        }
+
+        size_t unused = buffer_unused(buffer);
+
+        datas[upper_i] = buffer_next(buffer);
+        sizes[upper_i] = fread(datas[upper_i], 1, unused, files[upper_i]);
+
+        if (unused == sizes[upper_i] && fgetc(files[upper_i]) != EOF)
+        {
+            printf("Not enough memory to read file.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        buffer->used += sizes[upper_i];
     }
 
-    FILE *file = NULL;
+    uppers[0] = (struct upper){datas[0], sizes[0], 0, 0};
+    uppers[1] = (struct upper){datas[1], sizes[1], 0, 0};
 
-    if (NULL == (file = fopen(filepath, "rb")))
-    {
-        perror(filepath);
-        exit(EXIT_FAILURE);
-    }
-
-    upper->size = fread(upper->data, 1, capacity, file);
-
-    if (capacity == upper->size && fgetc(file) != EOF)
-    {
-        printf("Not enough memory to read file.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    (void)fclose(file);
-
-    printf("I've read %zu bytes!\n", upper->size);
-}
-
-void upper_empty(struct upper *upper)
-{
-    assert(upper != NULL);
-
-    upper->data    = NULL;
-    upper->size    = 0;
-    upper->read    = 0;
-    upper->written = 0;
+    files_close(files);
 }
 
 int upper_read(struct upper *upper, unsigned char **excerpt, size_t length)
@@ -80,14 +73,4 @@ int upper_write(struct upper *upper, unsigned char *excerpt, size_t length)
     upper->written += length;
 
     return error * (upper->size - upper->written);
-}
-
-void upper_quit(struct upper *upper)
-{
-    assert(upper != NULL);
-
-    free(upper->data);
-
-    upper->data = NULL;
-    upper->size = 0;
 }

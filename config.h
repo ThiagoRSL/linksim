@@ -5,8 +5,9 @@
 
 struct config
 {
-    int sockets[2];
-    struct upper upper;
+    int           sockets[2];
+    struct upper  uppers[2];
+    struct buffer buffer;
 };
 
 struct config config_init(int argc, char *argv[]);

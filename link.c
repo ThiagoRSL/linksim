@@ -35,8 +35,6 @@ int link_process(struct link *link, unsigned char *bytes, size_t n_byte)
     unsigned char *buffer = NULL;
     int to_send = upper_read(link->here, &buffer, link->frame_size);
 
-    int tries_left = 10000;
-
     for (int sent = 0, count = 0; sent != to_send; sent += count)
     {
         count = send(link->fd, (void *)(buffer + sent), to_send - sent, 0);
@@ -48,13 +46,6 @@ int link_process(struct link *link, unsigned char *bytes, size_t n_byte)
             if (EAGAIN != errno && EWOULDBLOCK != errno)
             {
                 fprintf(stderr, "Failure on socket send (fd %d)!\n", link->fd);
-
-		tries_left--;
-
-                if (0 == tries_left)
-                {
-                    return -1;
-                }
             }
 
             count = 0;

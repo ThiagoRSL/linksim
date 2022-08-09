@@ -22,8 +22,6 @@ static int device(void *ptr)
     int            n_byte                     = 0;
     unsigned char  bytes[LINK_FRAME_BYTE_MAX] = {0};
 
-    int tries_left = 10000;
-
     int code = 0;
 
     while (1 == (code = link_process(link, bytes, n_byte)))
@@ -36,20 +34,9 @@ static int device(void *ptr)
             if (EAGAIN != errno && EWOULDBLOCK != errno)
             {
                 fprintf(stderr, "Failure on socket (fd %d)!\n", link->fd);
-
-		tries_left--;
-
-                if (0 == tries_left)
-                {
-                    return 1;
-                }
             }
 
             n_byte = 0;
-        }
-        else
-        {
-            tries_left = 10000;
         }
 
         printf("Thread with fd %d received %d bytes.\n", link->fd, n_byte);
@@ -64,19 +51,13 @@ int main(int argc, char *argv[])
 
     struct config config = config_init(argc, argv);
 
-    assert(config.upper.size > 0);
-
     printf("fds = %d and %d.\n", config.sockets[0], config.sockets[1]);
 
     SDL_Thread *sender   = NULL;
     SDL_Thread *receiver = NULL;
-
-    struct upper empty = {0};
-
-    upper_empty(&empty);
     
-    struct link sending   = {&config.upper, &empty       , config.sockets[0], 500, 0};
-    struct link receiving = {&empty       , &config.upper, config.sockets[1], 500, 0};
+    struct link sending   = {config.uppers    , config.uppers + 1, config.sockets[0], 500, 0};
+    struct link receiving = {config.uppers + 1, config.uppers    , config.sockets[1], 500, 0};
 
     link_check(&sending);
     link_check(&receiving);

@@ -3,7 +3,7 @@ PLATFORM = win32
 
 ####### DEFAULT SETTINGS #######
 
-CC     = cc -std=c17 -pipe -g
+CC     = cc -std=c17 -pipe
 CFLAGS = -O2 -flto -Wpedantic -Wall -Wextra -Wvla -Wshadow -fstrict-aliasing
 LDLIBS = -lm 
 
@@ -40,9 +40,9 @@ $(TARGET):$(OBJECT)
 	$(CC) $(CFLAGS) $(SDLCFLAGS) -o $@ $(OBJECT) $(LDLIBS) $(SDLLDLIBS)
 
 main.o:config.h config.h main.c upper.h shenanigans.h
-config.o:config.c config.h upper.h shenanigans.h
+config.o:config.c config.h upper.h shenanigans.h buffer.h
 link.o:link.c link.h upper.h shenanigans.h
-upper.o:upper.c upper.h
+upper.o:upper.c upper.h buffer.h files.h
 
 ####### PLATFORM SPECIFIC RECIPES #######
 

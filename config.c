@@ -13,7 +13,19 @@
 
 static struct config config;
 
-static void config_quit(void);
+static void config_quit(void)
+{
+    free(config.buffer.it);
+
+    close(config.sockets[0]);
+    close(config.sockets[1]);
+
+    network_quit();
+
+#if SDL_VERSION_ATLEAST(2,0,16)
+    SDL_TLSCleanup();
+#endif
+}
 
 struct config config_init(int argc, char *argv[])
 {
@@ -27,9 +39,7 @@ struct config config_init(int argc, char *argv[])
 
     network_start();
 
-    int sockets[2] = {-1, -1};
-
-    if (-1 == socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, sockets))
+    if (-1 == socketpair(AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK, 0, config.sockets))
     {
         perror(NULL);
         exit(EXIT_FAILURE);
@@ -39,7 +49,7 @@ struct config config_init(int argc, char *argv[])
     int option = -1;
     int mbs = 2000;
 
-    char const usage[] = "USAGE: linksim[.exe] [-m <mbs>] <file>";
+    char const usage[] = "USAGE: linksim[.exe] [-m <mbs>] <file> [<file>]";
 
     while ((option = getopt(argc, argv, "m:")) != -1)
     {
@@ -61,33 +71,27 @@ struct config config_init(int argc, char *argv[])
         }
     }
 
-    if (optind != argc - 1 || '\0' == argv[optind][0])
+    int n_file = argc - optind;
+
+    if (n_file <= 0 || n_file > 2)
     {
-        printf("USAGE: linksim[.exe] [-m <mbs>] <file> [<file>]\n");
-	exit(EXIT_FAILURE);
+        printf("%s\n", usage);
+        exit(EXIT_FAILURE);
     }
 
-    struct upper upper = {0};
-    
-    upper_init(&upper, argv[optind], 1000000 * (size_t)mbs);
+    if ('\0' == argv[optind][0] || (2 == n_file && '\0' == argv[optind + 1][0]))
+    {
+        printf("%s\n", usage);
+        exit(EXIT_FAILURE);
+    }
 
-    config = (struct config){{sockets[0], sockets[1]}, upper};
+    char *paths[2] = {argv[optind], 2 == n_file ? argv[optind + 1] : NULL};
+
+    buffer_init(&config.buffer, 1000000 * (size_t)mbs);
+
+    upper_init(config.uppers, paths, &config.buffer);
 
     atexit(config_quit);
 
     return config;
-}
-
-static void config_quit(void)
-{
-    upper_quit(&(config.upper));
-
-    close(config.sockets[0]);
-    close(config.sockets[1]);
-
-    network_quit();
-
-#if SDL_VERSION_ATLEAST(2,0,16)
-    SDL_TLSCleanup();
-#endif
 }
