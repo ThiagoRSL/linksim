@@ -11,27 +11,26 @@ void arrayLeftShift(unsigned char* message, int size);
 
 Crc crc(unsigned char *message, int size)
 {
-    unsigned char* remainder = preProcessMessage(message, size);
+    unsigned char* dividend = preProcessMessage(message, size);
     Crc result;
 
     for (int i = 0; i < size+2; i++)
     {
-        printf("%u ", remainder[i]);
+        printf("%u ", dividend[i]);
     }
 
-    /*for (int bit = 0; bit < size; bit++)
+    for (int division = 0; division < size*8; division++)
     {
-        if (remainder[bit] & 1)
+        if (dividend[0] & 0x80)
         {
-            remainder = remainder ^ POLYNOME;
+            arrayLeftShift(dividend, size);
+            arrayXor(dividend);
         }
-
-        for (int i = 0; i < size; i++)
+        else
         {
+            arrayLeftShift(dividend, size);
         }
-
-        remainder = (remainder << 1);
-    }*/
+    }
 
     return result;
 }
@@ -62,6 +61,12 @@ void arrayLeftShift(unsigned char* message, int size)
         message[i] = message[i] | (message[i+1] >> 7);
     }
     message[i] = message[i] << 1;
+}
+
+void arrayXor(unsigned char* message)
+{
+    message[0] = message[0] ^ ((POLYNOME << 1) >> 8);
+    message[1] = message[1] ^ (POLYNOME & 0xFF);
 }
 
 int main(int argc, char *argv[])
