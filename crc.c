@@ -14,10 +14,13 @@ Crc crc(unsigned char *message, int size)
     unsigned char* dividend = preProcessMessage(message, size);
     Crc result;
 
+    printf("message: ");
     for (int i = 0; i < size+2; i++)
     {
         printf("%u ", dividend[i]);
     }
+    printf("\n");
+
 
     for (int division = 0; division < size*8; division++)
     {
@@ -31,6 +34,9 @@ Crc crc(unsigned char *message, int size)
             arrayLeftShift(dividend, size);
         }
     }
+
+    result.digest[0] = dividend[0];
+    result.digest[1] = dividend[1];
 
     return result;
 }
@@ -65,25 +71,18 @@ void arrayLeftShift(unsigned char* message, int size)
 
 void arrayXor(unsigned char* message)
 {
-    message[0] = message[0] ^ ((POLYNOME << 1) >> 8);
+    message[0] = message[0] ^ ((POLYNOME & 0xFFFF) >> 8);
     message[1] = message[1] ^ (POLYNOME & 0xFF);
 }
 
 int main(int argc, char *argv[])
 {
-    unsigned char original = 0x80;
-    unsigned char leftShift = original << 1;
-    unsigned char rightShift = original >> 7;
-    unsigned char message[] = {0x11, 0x05};
+    unsigned char message[] = {0x3B, 0xB6, 0xC2};
 
-    printf("Original: %u LeftShift: %u RightShift: %u\n", original, leftShift, rightShift);
-    crc(message, sizeof(message));
+    Crc crcRedundancy = crc(message, sizeof(message));
 
     printf("\n");
-    arrayLeftShift(message, 2);
-    for (int i=0; i < 2; i++){
-        printf("%u ", message[i]);
-    }
+    printf("%x %x \n", crcRedundancy.digest[0], crcRedundancy.digest[1]);
 
     return 0;
 }
