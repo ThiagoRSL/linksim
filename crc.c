@@ -3,7 +3,6 @@
 
 #define POLYNOME 0x11021 // CRC-16 - x^16 + x^12 + x^5 + 1
 #define POLYNOME_DEGREE 16
-#define MSB (1 << (POLYNOME_DEGREE - 1))
 
 unsigned char* preProcessMessage(unsigned char* message, int size);
 void arrayXor(unsigned char* message);
