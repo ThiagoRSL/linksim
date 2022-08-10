@@ -97,11 +97,11 @@ IMPORTANTE: escolher `PLATFORM` no arquivo `Makefile` antes de compilar.
 - [ ] Perder quadros aleatoriamente
 - [ ] Chance de perda configurável
 
-### Contrato: aperfeiçoar enlace com detecção de erro CRC-32
+### Contrato: aperfeiçoar enlace com detecção de erro CRC-16
 
-- [ ] Adicionar campo no cabeçalho com digestão do CRC-32
-- [ ] Calcular e armazenar CRC-32 antes de envio
-- [ ] Calcular e comparar CRC-32 após recebimento
+- [X] Adicionar campo no cabeçalho com digestão do CRC-16
+- [X] Calcular e armazenar CRC-16 antes de envio
+- [ ] Calcular e comparar CRC-16 após recebimento
 - [ ] Descartar quadro em caso de erro, leitura só se tudo OK
 - [ ] Ler próximo quadro como dado se não detectar bit stuffing
 
