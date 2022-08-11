@@ -72,7 +72,7 @@ void arrayXor(unsigned char* message)
     message[1] = message[1] ^ (POLYNOME & 0xFF);
 }
 
-int main(int argc, char *argv[])
+/*int main(int argc, char *argv[])
 {
     unsigned char message[] = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39};
     unsigned char response[11] = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39};
@@ -98,5 +98,5 @@ int main(int argc, char *argv[])
     printf("%x %x \n", crcValidation.digest[0], crcValidation.digest[1]);
 
     return 0;
-}
+}*/
 
