@@ -20,28 +20,16 @@ static int device(void *ptr)
     assert(ptr != NULL);
 
     struct link   *link                       = (struct link *)ptr;
-    int            n_byte                     = 0;
-    unsigned char  bytes[LINK_FRAME_BYTE_MAX] = {0};
+    int code;
+    uint64_t tempoAntigo = SDL_GetTicks64();
 
-    int code = 0;
-
-    while (1 == (code = link_process(link, bytes, n_byte)))
+    do 
     {
-        n_byte = recv(link->physical.fd, (void *)bytes, link->frame_size, 0);
-
-        if (-1 == n_byte)
-        {
-            fix_errno();
-            if (EAGAIN != errno && EWOULDBLOCK != errno)
-            {
-                fprintf(stderr, "Failure on socket (fd %d)!\n", link->physical.fd);
-            }
-
-            n_byte = 0;
-        }
-
-        printf("Thread with fd %d received %d bytes.\n", link->physical.fd, n_byte);
-    }
+        uint64_t tempoAtual = SDL_GetTicks64(); 
+        uint64_t delta = (tempoAntigo > tempoAtual) ? 0 : tempoAtual - tempoAntigo;
+        tempoAntigo = tempoAtual;
+        code = physical_receive(link, delta);
+    } while (code == 1);
 
     return -1 == code ? 1 : 0;
 }
