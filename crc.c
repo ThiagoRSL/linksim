@@ -1,30 +1,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "crc.h"
+#include "link.h"
 
 #define POLYNOME 0x11021 // CRC-16 - x^16 + x^12 + x^5 + 1
 
-Crc crc(unsigned char *message, int size);
+Crc crc(unsigned char *message, size_t size);
 
-unsigned char* copyMessage(unsigned char* message, int size);
-unsigned char* preProcessMessage(unsigned char* message, int size);
+unsigned char* copyMessage(unsigned char* message, unsigned char* newMessage, size_t size);
+unsigned char* preProcessMessage(unsigned char* message, unsigned char* newMessage, size_t size);
 
 void arrayXor(unsigned char* message);
-void arrayLeftShift(unsigned char* message, int size);
+void arrayLeftShift(unsigned char* message, size_t size);
 
-Crc generateCRC(unsigned char *message, int size)
+Crc generateCRC(unsigned char *message, size_t size)
 {
-    unsigned char* dividend = preProcessMessage(message, size);
+    unsigned char newMessage[LINK_FRAME_BYTE_MAX] = {0};
+    unsigned char* dividend = preProcessMessage(message, newMessage, size);
     return crc(dividend, size);
 }
 
-Crc validateCRC(unsigned char *message, int size)
-{
-    unsigned char* dividend = copyMessage(message, size);
+Crc validateCRC(unsigned char *message, size_t size)
+{    
+    unsigned char newMessage[LINK_FRAME_BYTE_MAX] = {0};
+    unsigned char* dividend = copyMessage(message, newMessage, size);
     return crc(dividend, size);
 }
 
-Crc crc(unsigned char *message, int size)
+Crc crc(unsigned char *message, size_t size)
 {
     Crc result;
 
@@ -47,9 +50,8 @@ Crc crc(unsigned char *message, int size)
     return result;
 }
 
-unsigned char* preProcessMessage(unsigned char* message, int size)
+unsigned char* preProcessMessage(unsigned char* message, unsigned char* newMessage, size_t size)
 {
-    unsigned char* newMessage = (unsigned char*) malloc(sizeof(unsigned char)*(size+2));
     int i;
 
     for (i = 0; i < size; i++)
@@ -63,9 +65,8 @@ unsigned char* preProcessMessage(unsigned char* message, int size)
     return newMessage;
 }
 
-unsigned char* copyMessage(unsigned char* message, int size)
+unsigned char* copyMessage(unsigned char* message, unsigned char* newMessage, size_t size)
 {
-    unsigned char* newMessage = (unsigned char*) malloc(sizeof(unsigned char)*(size+2));
     int i;
 
     for (i = 0; i < size; i++)
@@ -76,7 +77,7 @@ unsigned char* copyMessage(unsigned char* message, int size)
     return newMessage;
 }
 
-void arrayLeftShift(unsigned char* message, int size)
+void arrayLeftShift(unsigned char* message, size_t size)
 {
     int i;
 
@@ -94,7 +95,7 @@ void arrayXor(unsigned char* message)
     message[1] = message[1] ^ (POLYNOME & 0xFF);
 }
 
-/*int main(int argc, char *argv[])
+int main(int argc, char *argv[])
 {
     unsigned char message[] = {0x3B, 0xB6, 0xC2};
     unsigned char response[5] = {0x3B, 0xB6, 0xC2};
@@ -114,5 +115,5 @@ void arrayXor(unsigned char* message)
     printf("%x %x \n", crcValidation.digest[0], crcValidation.digest[1]);
 
     return 0;
-}*/
+}
 
