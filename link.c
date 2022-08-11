@@ -10,6 +10,7 @@
 #include "shenanigans.h"
 #include "upper.h"
 #include "layers.h"
+#include "physical.h"
 
 void link_check(struct link *link)
 {
@@ -36,7 +37,9 @@ int link_process(struct link *link, unsigned char *bytes, size_t n_byte)
     unsigned char *buffer = NULL;
     int to_send = upper_read(link->here, &buffer, link->frame_size);
 
-    for (int sent = 0, count = 0; sent != to_send; sent += count)
+    physical_send(&link->physical, buffer, to_send);
+
+    /*for (int sent = 0, count = 0; sent != to_send; sent += count)
     {
         count = send(link->physical.fd, (void *)(buffer + sent), to_send - sent, 0);
 
@@ -51,7 +54,7 @@ int link_process(struct link *link, unsigned char *bytes, size_t n_byte)
 
             count = 0;
         }
-    }
+    }*/
 
     printf("Remaining at fd %d: %d, to_send = %d (received %zu bytes)\n", link->physical.fd, remaining, to_send, n_byte);
 

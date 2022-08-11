@@ -48,5 +48,20 @@ int physical_receive(struct link *link, uint64_t delta)
 
 void physical_send(struct physical *physical, unsigned char *message, size_t size)
 {
-    return;
+    for (int sent = 0, count = 0; sent != size; sent += count)
+    {
+        count = send(physical->fd, (void *)(message + sent), size - sent, 0);
+
+        if (-1 == count)
+        {
+            fix_errno();
+
+            if (EAGAIN != errno && EWOULDBLOCK != errno)
+            {
+                fprintf(stderr, "Failure on socket send (fd %d)!\n", physical->fd);
+            }
+
+            count = 0;
+        }
+    }
 }
