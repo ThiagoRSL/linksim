@@ -44,24 +44,22 @@ int physical_receive(struct link *link, uint64_t delta)
     int errorType = delta % 4;
     rnd_pcg_t random = link->physical.random;
 
+    RND_U32 chance = rnd_pcg_next( &random );
+    printf("%u\n", chance);
+    if (chance % 10)
+    {               
+        printf("Thread with fd %d received %d bytes.\n", link->physical.fd, n_byte);
+        return link_process(link, bytes, n_byte);
+    }  
+
     switch (errorType)
     {
-        case 0: // Erro de bit
-            RND_U32 chance = rnd_pcg_next( &random );
-            if (chance % 10)
-            {               
-                break;
-            }             
+        case 0: // Erro de bit                      
             int flippedByte = rnd_pcg_range( &random, 0, n_byte-1 );
             int position = rnd_pcg_range( &random, 0, 7 );
             bytes[flippedByte] = bytes[flippedByte] ^ (0x1 << position);
             break;
         case 1: // Erro de rajada
-            RND_U32 chance = rnd_pcg_next( &random );
-            if (chance % 10)
-            {               
-                break;
-            }
             int totalFlippedBytes = rnd_pcg_range( &random, 2, n_byte-1 );
             for (int i = 0; i < totalFlippedBytes; i++)
             {
@@ -71,14 +69,13 @@ int physical_receive(struct link *link, uint64_t delta)
             }
             break;
         case 2: // Quadro fora de ordem
-
+            int frame1 = rnd_pcg_range( &random, 2, n_byte-1 );
+            int frame2 = rnd_pcg_range( &random, 2, n_byte-1 );
+            unsigned char* aux = link->physical.streams[frame1];
+            link->physical.streams[frame1] = link->physical.streams[frame2];
+            link->physical.streams[frame2] = aux;
             break;
         case 3: // Quadro perdido
-            RND_U32 chance = rnd_pcg_next( &random );
-            if (chance % 10)
-            {               
-                break;
-            }
             n_byte = 0;
             break;
     }
