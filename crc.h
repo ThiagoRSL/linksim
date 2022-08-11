@@ -4,4 +4,3 @@ typedef struct crc
 }Crc;
 
 Crc generateCRC(unsigned char *message, size_t size);
-Crc validateCRC(unsigned char *message, size_t size);

@@ -8,20 +8,12 @@
 Crc crc(unsigned char *message, size_t size);
 
 unsigned char* copyMessage(unsigned char* message, unsigned char* newMessage, size_t size);
-unsigned char* preProcessMessage(unsigned char* message, unsigned char* newMessage, size_t size);
 
 void arrayXor(unsigned char* message);
 void arrayLeftShift(unsigned char* message, size_t size);
 
 Crc generateCRC(unsigned char *message, size_t size)
 {
-    unsigned char newMessage[LINK_FRAME_BYTE_MAX] = {0};
-    unsigned char* dividend = preProcessMessage(message, newMessage, size);
-    return crc(dividend, size);
-}
-
-Crc validateCRC(unsigned char *message, size_t size)
-{    
     unsigned char newMessage[LINK_FRAME_BYTE_MAX] = {0};
     unsigned char* dividend = copyMessage(message, newMessage, size);
     return crc(dividend, size);
@@ -48,21 +40,6 @@ Crc crc(unsigned char *message, size_t size)
     result.digest[1] = message[1];
 
     return result;
-}
-
-unsigned char* preProcessMessage(unsigned char* message, unsigned char* newMessage, size_t size)
-{
-    int i;
-
-    for (i = 0; i < size; i++)
-    {
-        newMessage[i] = message[i];
-    }
-
-    newMessage[i] = 0x0;
-    newMessage[i+1] = 0x0;
-
-    return newMessage;
 }
 
 unsigned char* copyMessage(unsigned char* message, unsigned char* newMessage, size_t size)
@@ -97,20 +74,26 @@ void arrayXor(unsigned char* message)
 
 int main(int argc, char *argv[])
 {
-    unsigned char message[] = {0x3B, 0xB6, 0xC2};
-    unsigned char response[5] = {0x3B, 0xB6, 0xC2};
+    unsigned char message[] = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39};
+    unsigned char response[11] = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39};
 
     Crc crcRedundancy = generateCRC(message, sizeof(message));
-    response[3] = crcRedundancy.digest[0];
-    response[4] = crcRedundancy.digest[1];
+    response[9] = crcRedundancy.digest[0];
+    response[10] = crcRedundancy.digest[1];
 
-    Crc crcValidation = validateCRC(response, sizeof(response));
+    Crc crcValidation = generateCRC(response, sizeof(response));
 
-    printf("%x %x %x \n", message[0], message[1], message[2]);
+    for (int i = 0; i < 9; i++)
+    {
+        printf("%x \n", message[i]);    
+    }
 
     printf("%x %x \n", crcRedundancy.digest[0], crcRedundancy.digest[1]);
 
-    printf("%x %x %x %x %x \n", response[0], response[1], response[2], response[3], response[4]);
+    for (int i = 0; i < 11; i++)
+    {
+        printf("%x \n", response[i]);    
+    }
 
     printf("%x %x \n", crcValidation.digest[0], crcValidation.digest[1]);
 
