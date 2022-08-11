@@ -1,19 +1,9 @@
 #ifndef __LINK_H__
 #define __LINK_H__
 
-#include "upper.h"
+#include "layers.h"
 
 #define LINK_FRAME_BYTE_MAX 1500
-
-struct link
-{
-    struct upper *here;
-    struct upper *there;
-    int           fd;
-
-    int frame_size;
-    int received;
-};
 
 void link_check(struct link *link);
 int  link_process(struct link *link, unsigned char *bytes, size_t n_byte);

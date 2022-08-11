@@ -2,6 +2,7 @@
 #define __BUFFER_H__
 
 #include <stdlib.h>
+#include <assert.h>
 
 struct buffer
 {

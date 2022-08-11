@@ -10,6 +10,7 @@
 #include "config.h"
 #include "shenanigans.h"
 #include "upper.h"
+#include "layers.h"
 
 static struct config config;
 

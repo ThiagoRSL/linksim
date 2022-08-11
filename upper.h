@@ -5,14 +5,7 @@
 #include <stddef.h>
 
 #include "buffer.h"
-
-struct upper
-{
-    unsigned char *data;
-    size_t         size;
-    size_t         read;
-    size_t         written;
-};
+#include "layers.h"
 
 void upper_init (struct upper uppers[2], char *paths[2], struct buffer *buffer);
 int  upper_read (struct upper *upper, unsigned char **excerpt, size_t length);

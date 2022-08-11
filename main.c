@@ -13,6 +13,7 @@
 #include "link.h"
 #include "shenanigans.h"
 #include "upper.h"
+#include "physical.h"
 
 static int device(void *ptr)
 {
@@ -26,20 +27,20 @@ static int device(void *ptr)
 
     while (1 == (code = link_process(link, bytes, n_byte)))
     {
-        n_byte = recv(link->fd, (void *)bytes, link->frame_size, 0);
+        n_byte = recv(link->physical.fd, (void *)bytes, link->frame_size, 0);
 
         if (-1 == n_byte)
         {
             fix_errno();
             if (EAGAIN != errno && EWOULDBLOCK != errno)
             {
-                fprintf(stderr, "Failure on socket (fd %d)!\n", link->fd);
+                fprintf(stderr, "Failure on socket (fd %d)!\n", link->physical.fd);
             }
 
             n_byte = 0;
         }
 
-        printf("Thread with fd %d received %d bytes.\n", link->fd, n_byte);
+        printf("Thread with fd %d received %d bytes.\n", link->physical.fd, n_byte);
     }
 
     return -1 == code ? 1 : 0;
@@ -56,8 +57,8 @@ int main(int argc, char *argv[])
     SDL_Thread *sender   = NULL;
     SDL_Thread *receiver = NULL;
     
-    struct link sending   = {config.uppers    , config.uppers + 1, config.sockets[0], 500, 0};
-    struct link receiving = {config.uppers + 1, config.uppers    , config.sockets[1], 500, 0};
+    struct link sending   = {config.uppers    , config.uppers + 1, physical_initialize(config.sockets[0]), 500, 0};
+    struct link receiving = {config.uppers + 1, config.uppers    , physical_initialize(config.sockets[1]), 500, 0};
 
     link_check(&sending);
     link_check(&receiving);

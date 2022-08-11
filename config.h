@@ -1,7 +1,8 @@
 #ifndef __CONFIG_H__
 #define __CONFIG_H__
 
-#include "upper.h"
+#include "layers.h"
+#include "buffer.h"
 
 struct config
 {
