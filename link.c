@@ -39,23 +39,6 @@ int link_process(struct link *link, unsigned char *bytes, size_t n_byte)
 
     physical_send(&link->physical, buffer, to_send);
 
-    /*for (int sent = 0, count = 0; sent != to_send; sent += count)
-    {
-        count = send(link->physical.fd, (void *)(buffer + sent), to_send - sent, 0);
-
-        if (-1 == count)
-        {
-            fix_errno();
-
-            if (EAGAIN != errno && EWOULDBLOCK != errno)
-            {
-                fprintf(stderr, "Failure on socket send (fd %d)!\n", link->physical.fd);
-            }
-
-            count = 0;
-        }
-    }*/
-
     printf("Remaining at fd %d: %d, to_send = %d (received %zu bytes)\n", link->physical.fd, remaining, to_send, n_byte);
 
     return remaining != 0 || to_send != 0;
