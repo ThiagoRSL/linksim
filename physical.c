@@ -24,7 +24,7 @@ struct physical physical_initialize(int fd)
     return physical;
 }
 
-int physical_receive(struct link *link, uint64_t delta)
+int physical_receive(struct link *link)
 {
     unsigned char  bytes[LINK_FRAME_BYTE_MAX] = {0};
 
@@ -41,11 +41,10 @@ int physical_receive(struct link *link, uint64_t delta)
         n_byte = 0;
     }
 
-    int errorType = delta % 4;
     rnd_pcg_t random = link->physical.random;
+    int errorType = rnd_pcg_range(&random, 0, 3);
 
     RND_U32 chance = rnd_pcg_next( &random );
-    printf("%u\n", chance);
     if (chance % 10)
     {               
         printf("Thread with fd %d received %d bytes.\n", link->physical.fd, n_byte);
@@ -54,7 +53,7 @@ int physical_receive(struct link *link, uint64_t delta)
 
     switch (errorType)
     {
-        case 0: // Erro de bit                      
+        case 0: // Erro de bit
             int flippedByte = rnd_pcg_range( &random, 0, n_byte-1 );
             int position = rnd_pcg_range( &random, 0, 7 );
             bytes[flippedByte] = bytes[flippedByte] ^ (0x1 << position);

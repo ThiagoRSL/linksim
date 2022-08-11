@@ -21,14 +21,10 @@ static int device(void *ptr)
 
     struct link   *link                       = (struct link *)ptr;
     int code;
-    uint64_t tempoAntigo = SDL_GetTicks64();
 
     do 
     {
-        uint64_t tempoAtual = SDL_GetTicks64(); 
-        uint64_t delta = (tempoAntigo > tempoAtual) ? 0 : tempoAtual - tempoAntigo;
-        tempoAntigo = tempoAtual;
-        code = physical_receive(link, delta);
+        code = physical_receive(link);
     } while (code == 1);
 
     return -1 == code ? 1 : 0;
