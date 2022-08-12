@@ -23,24 +23,15 @@ ESC = 33 (00011011)
 
 */
 //Frame code: 11 = Piggybank, 01 = ACK, 10 = Info, outras possibilidas = controle;
-struct frame_control
-{
-    int send_frame;
-    int sliding_window_start;
-    int sliding_window_end;
-    unsigned char** frame_list;    
-    clock_t* frame_timeouts_list;
-    int* frame_confirmation_list; //0 -> Aguardando confirmação, 1 -> Confirmado, 2 -> Reenvio/envio
 
-};
 
 unsigned char* bitify(struct frame frm);
 int bit_to_int(char* bit_string);
 struct frame_control* initialize_frame_control();
 void destroy_frame_control(struct frame_control* fcontrol);
 
-void GoBackN_Receiver(struct frame* frm, struct link* link)
-void GoBackN_Sender(struct frame* frm, struct link* link)
+int GoBackN_Receiver(struct frame* frm, struct link* link);
+int GoBackN_Sender(struct frame* frm, struct link* link);
 
 /*
     frame
