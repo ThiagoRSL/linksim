@@ -134,9 +134,9 @@ int bit_to_int(char* bit_string){
 
 struct frame_control* initialize_frame_control(){
     struct frame_control* fcontrol = (struct frame_control*) malloc(sizeof(struct frame_control));
-    fcontrol->frame_list = (unsigned char**) malloc(sizeof(unsigned char*) * sliding_window_size);
-    fcontrol->frame_timeouts_list = (clock_t*) malloc(sizeof(clock_t) * sliding_window_size); 
-    fcontrol->frame_confirmation_list = (int*) malloc(sizeof(int) * sliding_window_size); 
+    fcontrol->frame_list = (unsigned char**) malloc(sizeof(unsigned char*) * SLIDING_WINDOW_SIZE);
+    fcontrol->frame_timeouts_list = (clock_t*) malloc(sizeof(clock_t) * SLIDING_WINDOW_SIZE); 
+    fcontrol->frame_confirmation_list = (int*) malloc(sizeof(int) * SLIDING_WINDOW_SIZE); 
     fcontrol->sliding_window_start = 0;
     fcontrol->sliding_window_end = SLIDING_WINDOW_SIZE - 2; //Size = 255 então last = 253 pois precisa ter 1 a menos.
     
