@@ -4,7 +4,7 @@
 #include "rnd.h"
 #include <time.h>
 
-#define MAX_STREAM 1000
+#define MAX_STREAM 500
 
 struct upper
 {

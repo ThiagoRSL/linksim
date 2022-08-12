@@ -48,54 +48,75 @@ int physical_receive(struct link *link)
         n_byte = 0;
     }
 
-    updateSeed(&link->physical.random);
     rnd_pcg_t random = link->physical.random;
+    updateSeed(&random);
     int errorType = rnd_pcg_range(&random, 0, 3);
 
     RND_U32 chance = rnd_pcg_next( &random );
-    if (chance % 10)
-    {               
-        printf("Thread with fd %d received %d bytes.\n", link->physical.fd, n_byte);
-        return link_process(link, bytes, n_byte);
-    }  
-
-    int flippedByte, position, totalFlippedBytes, frame1, frame2;
-
-    switch (errorType)
+    if (chance % 10 == 0)
     {
-        case 0: // Erro de bit
-            flippedByte = rnd_pcg_range( &random, 0, n_byte-1 );
-            position = rnd_pcg_range( &random, 0, 7 );
-            bytes[flippedByte] = bytes[flippedByte] ^ (0x1 << position);
-            break;
-        case 1: // Erro de rajada
-            totalFlippedBytes = rnd_pcg_range( &random, 2, n_byte-1 );
-            for (int i = 0; i < totalFlippedBytes; i++)
-            {
+        int flippedByte, position, totalFlippedBytes, frame1, frame2;
+
+        switch (errorType)
+        {
+            case 0: // Erro de bit
                 flippedByte = rnd_pcg_range( &random, 0, n_byte-1 );
                 position = rnd_pcg_range( &random, 0, 7 );
                 bytes[flippedByte] = bytes[flippedByte] ^ (0x1 << position);
-            }
-            break;
-        case 2: // Quadro fora de ordem
-            frame1 = rnd_pcg_range( &random, 2, n_byte-1 );
-            frame2 = rnd_pcg_range( &random, 2, n_byte-1 );
-            unsigned char* aux = link->physical.streams[frame1];
-            link->physical.streams[frame1] = link->physical.streams[frame2];
-            link->physical.streams[frame2] = aux;
-            break;
-        case 3: // Quadro perdido
-            n_byte = 0;
-            break;
+                break;
+            case 1: // Erro de rajada
+                totalFlippedBytes = rnd_pcg_range( &random, 2, n_byte-1 );
+                for (int i = 0; i < totalFlippedBytes; i++)
+                {
+                    flippedByte = rnd_pcg_range( &random, 0, n_byte-1 );
+                    position = rnd_pcg_range( &random, 0, 7 );
+                    bytes[flippedByte] = bytes[flippedByte] ^ (0x1 << position);
+                }
+                break;
+            case 2: // Quadro fora de ordem
+                frame1 = rnd_pcg_range( &random, 2, n_byte-1 );
+                frame2 = rnd_pcg_range( &random, 2, n_byte-1 );
+                unsigned char* aux = link->physical.streams[frame1];
+                link->physical.streams[frame1] = link->physical.streams[frame2];
+                link->physical.streams[frame2] = aux;
+                break;
+            case 3: // Quadro perdido
+                n_byte = 0;
+                break;
+        }
+    }    
+
+    if (n_byte != 0)
+    {
+        unsigned char* copy  = (unsigned char*)malloc(n_byte);
+        for (int i = 0; i < n_byte; i++)
+        {
+            copy[i] = bytes[i];
+        }
+        link->physical.streams[link->physical.total_streams] = copy;
+        link->physical.sizes[link->physical.total_streams] = n_byte;
+        link->physical.timeout[link->physical.total_streams] = (uint64_t) 5;
+        link->physical.total_streams++;
     }
 
-    link->physical.streams[link->physical.total_streams] = bytes;
-    link->physical.sizes[link->physical.total_streams] = n_byte;    
-    link->physical.total_streams++;
+    if (link->physical.total_streams == MAX_STREAM)
+    {
+        link->physical.total_streams = 0;
+    }
 
+    for (int i = 0; i < MAX_STREAM; i++)
+    {
+        link->physical.timeout[i] = (link->physical.timeout[i] > 0) ? link->physical.timeout[i] - (uint64_t) 1 : link->physical.timeout[i];
+    }
 
-    printf("Thread with fd %d received %d bytes.\n", link->physical.fd, n_byte);
-    return link_process(link, bytes, n_byte);
+    int i = 0;
+    while (link->physical.timeout[i] != (uint64_t) 1)
+    {
+        i++;
+    }
+
+    printf("Thread with fd %d received %d bytes.\n", link->physical.fd, link->physical.sizes[i]);
+    return link_process(link, link->physical.streams[i], link->physical.sizes[i]);
 }
 
 void physical_send(struct physical *physical, unsigned char *message, size_t size)
