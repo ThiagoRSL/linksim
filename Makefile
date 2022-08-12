@@ -4,13 +4,13 @@ PLATFORM = win32
 ####### DEFAULT SETTINGS #######
 
 CC     = cc -std=c17 -pipe
-CFLAGS = -O2 -flto -Wpedantic -Wall -Wextra -Wvla -Wshadow -fstrict-aliasing
+CFLAGS = -O2 -Wpedantic -Wall -Wextra -Wvla -Wshadow -fstrict-aliasing
 LDLIBS = -lm 
 
 SDLCFLAGS =
 SDLLDLIBS =
 
-OBJECT = main.o config.o link.o upper.o rnd.o physical.o crc.o
+OBJECT = main.o config.o frame.o link.o upper.o rnd.o physical.o crc.o
 TARGET = linksim
 
 ####### PLATFORM SPECIFIC STUFF HERE #######
@@ -41,6 +41,7 @@ $(TARGET):$(OBJECT)
 
 main.o:config.h config.h main.c upper.h shenanigans.h
 config.o:config.c config.h upper.h shenanigans.h buffer.h
+frame.o:frame.c frame.h
 link.o:link.c link.h upper.h shenanigans.h
 upper.o:upper.c upper.h buffer.h files.h
 rnd.o:rnd.c rnd.h

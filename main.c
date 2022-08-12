@@ -1,6 +1,6 @@
 #include <assert.h>
 #include <errno.h>
-#include <stdlib.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -41,8 +41,8 @@ int main(int argc, char *argv[])
     SDL_Thread *sender   = NULL;
     SDL_Thread *receiver = NULL;
     
-    struct link sending   = {config.uppers    , config.uppers + 1, physical_initialize(config.sockets[0]), 500, 0};
-    struct link receiving = {config.uppers + 1, config.uppers    , physical_initialize(config.sockets[1]), 500, 0};
+    struct link sending   = {config.uppers    , config.uppers + 1, physical_initialize(config.sockets[0]), NULL, 500, 0};
+    struct link receiving = {config.uppers + 1, config.uppers    , physical_initialize(config.sockets[1]), NULL, 500, 0};
 
     link_check(&sending);
     link_check(&receiving);
