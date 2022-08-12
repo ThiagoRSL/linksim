@@ -30,8 +30,8 @@ int bit_to_int(char* bit_string);
 struct frame_control* initialize_frame_control();
 void destroy_frame_control(struct frame_control* fcontrol);
 
-int GoBackN_Receiver(struct frame* frm, struct link* link);
-int GoBackN_Sender(struct frame* frm, struct link* link);
+int GoBackN_Receiver(struct frame* frame, struct link* link);
+int GoBackN_Sender(struct frame* frame, struct link* link);
 
 /*
     frame
