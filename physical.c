@@ -24,6 +24,13 @@ struct physical physical_initialize(int fd)
     return physical;
 }
 
+void updateSeed(rnd_pcg_t* random)
+{
+    time_t seconds;
+    time (&seconds);
+    rnd_pcg_seed(random, (RND_U32) seconds);
+}
+
 int physical_receive(struct link *link)
 {
     unsigned char  bytes[LINK_FRAME_BYTE_MAX] = {0};
@@ -41,6 +48,7 @@ int physical_receive(struct link *link)
         n_byte = 0;
     }
 
+    updateSeed(&link->physical.random);
     rnd_pcg_t random = link->physical.random;
     int errorType = rnd_pcg_range(&random, 0, 3);
 
@@ -51,25 +59,27 @@ int physical_receive(struct link *link)
         return link_process(link, bytes, n_byte);
     }  
 
+    int flippedByte, position, totalFlippedBytes, frame1, frame2;
+
     switch (errorType)
     {
         case 0: // Erro de bit
-            int flippedByte = rnd_pcg_range( &random, 0, n_byte-1 );
-            int position = rnd_pcg_range( &random, 0, 7 );
+            flippedByte = rnd_pcg_range( &random, 0, n_byte-1 );
+            position = rnd_pcg_range( &random, 0, 7 );
             bytes[flippedByte] = bytes[flippedByte] ^ (0x1 << position);
             break;
         case 1: // Erro de rajada
-            int totalFlippedBytes = rnd_pcg_range( &random, 2, n_byte-1 );
+            totalFlippedBytes = rnd_pcg_range( &random, 2, n_byte-1 );
             for (int i = 0; i < totalFlippedBytes; i++)
             {
-                int flippedByte = rnd_pcg_range( &random, 0, n_byte-1 );
-                int position = rnd_pcg_range( &random, 0, 7 );
+                flippedByte = rnd_pcg_range( &random, 0, n_byte-1 );
+                position = rnd_pcg_range( &random, 0, 7 );
                 bytes[flippedByte] = bytes[flippedByte] ^ (0x1 << position);
             }
             break;
         case 2: // Quadro fora de ordem
-            int frame1 = rnd_pcg_range( &random, 2, n_byte-1 );
-            int frame2 = rnd_pcg_range( &random, 2, n_byte-1 );
+            frame1 = rnd_pcg_range( &random, 2, n_byte-1 );
+            frame2 = rnd_pcg_range( &random, 2, n_byte-1 );
             unsigned char* aux = link->physical.streams[frame1];
             link->physical.streams[frame1] = link->physical.streams[frame2];
             link->physical.streams[frame2] = aux;
