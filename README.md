@@ -152,3 +152,4 @@ IMPORTANTE: escolher `PLATFORM` no arquivo `Makefile` antes de compilar.
 ### Contrato: modo piggyback
 
 - [X] 8=======D~~~~~
+- [X] Sexo Gay Bruto
